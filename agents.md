@@ -123,26 +123,99 @@ git push       # Shares with team
 
 ## Beads Basics
 
-Use Beads issue types to keep work structured: `feature`, `task`, `subtask`, `bug`.
+Beads supports these issue types: `epic`, `feature`, `task`, `bug`, `chore`, `merge-request`, `molecule`.
+Most commonly used: `feature`, `task`, `bug`, `epic`, `chore`.
 Always include a description.
 
 ```powershell
 bd create "Title" --description "Context" -p 2 -t feature --json
 bd create "Task" --description "Parent: Feature Title" -p 2 -t task --json
-bd create "Subtask" --description "Parent: Task Title" -p 2 -t subtask --json
+bd create "Bug Fix" --description "Issue description" -p 1 -t bug --json
+bd create "Epic Title" --description "Large scope work" -p 1 -t epic --json
+bd create "Chore" --description "Maintenance task" -p 3 -t chore --json
 bd update <id> --status in_progress
 bd close <id> --reason "Done"
 ```
 
-## Plan to Beads
+## Plan to Beads Workflow
 
-Use the plan template and the parser to generate Beads commands:
+Convert structured plans into Beads issues automatically using the plan template and parser.
 
-```powershell
-Copy-Item -Force templates\plan_template.md plan.md
-.venv\Scripts\activate; python scripts\plan_to_beads.py --plan plan.md --output beads_commands.ps1
-& .\beads_commands.ps1
+**Template Structure:**
+The plan template uses a hierarchical format:
+
+- `### Feature: Title [P1]` - Top-level feature with priority
+- `- Task: Title [P2]` - Tasks under features
+- `- Subtask: Title [P3]` - Subtasks under tasks
+- `- Notes: Context` - Additional context for any level
+
+**Complete Workflow:**
+
+1. **Create a plan file:**
+
+   ```powershell
+   # Option 1: Create in plans folder (recommended for multiple plans)
+   New-Item -ItemType Directory -Force -Path plans
+   Copy-Item templates\plan_template.md plans\my-feature.md
+   
+   # Option 2: Create at root (for single plans)
+   Copy-Item templates\plan_template.md plan.md
+   ```
+
+2. **Edit the plan file:**
+   - Replace example features with your actual features
+   - Add tasks under each feature
+   - Set priority levels: [P1] (highest) to [P3] (lowest)
+   - Add notes for implementation details or acceptance criteria
+   - Break down complex tasks into multiple smaller tasks if needed
+
+3. **Convert plan to Beads JSONL:**
+
+   ```powershell
+   # PowerShell
+   .venv\Scripts\activate; python scripts\plan_to_beads.py --plan plans\my-feature.md --output plan_issues.jsonl
+   ```
+
+   ```bash
+   # Bash
+   source .venv/bin/activate && python scripts/plan_to_beads.py --plan plans/my-feature.md --output plan_issues.jsonl
+   ```
+
+4. **Append to Beads JSONL and import:**
+
+   ```powershell
+   # PowerShell
+   Get-Content plan_issues.jsonl | Add-Content .beads\issues.jsonl
+   bd sync --import
+   Remove-Item plan_issues.jsonl
+   ```
+
+   ```bash
+   # Bash
+   cat plan_issues.jsonl >> .beads/issues.jsonl
+   bd sync --import
+   rm plan_issues.jsonl
+   ```
+
+5. **Verify issues were created:**
+
+   ```powershell
+   bd list
+   ```
+
+**Example Plan:**
+
+```markdown
+### Feature: User Authentication [P1]
+- Notes: Users can securely log in and manage sessions
+- Task: Create HTML login form [P1]
+- Task: Add form validation [P1]
+- Task: Implement session management [P1]
+  - Notes: Use JWT tokens for stateless auth
+- Task: Add logout functionality [P2]
 ```
+
+This generates issues with automatic parent tracking and descriptions including the plan source.
 
 ## Code Standards
 

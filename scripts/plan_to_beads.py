@@ -1,9 +1,13 @@
-"""Convert a plan markdown file into Beads CLI commands."""
+"""Convert a plan markdown file into Beads JSONL format."""
 
 from __future__ import annotations
 
 import argparse
+import json
+import secrets
+import subprocess
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -54,10 +58,11 @@ def parse_plan(lines: Iterable[str]) -> list[PlanItem]:
             continue
 
         if line.lstrip().startswith("- Subtask:"):
+            # Beads doesn't support subtask type, convert to task
             title = line.split("- Subtask:", 1)[1].strip()
             title, priority = parse_priority(title)
             parent_title = current_task.title if current_task else ""
-            subtask = PlanItem("subtask", title, parent_title, priority, [])
+            subtask = PlanItem("task", title, parent_title, priority, [])
             items.append(subtask)
             continue
 
@@ -71,9 +76,58 @@ def parse_plan(lines: Iterable[str]) -> list[PlanItem]:
     return items
 
 
-def ps_quote(value: str) -> str:
-    escaped = value.replace("'", "''")
-    return f"'{escaped}'"
+def get_prefix() -> str:
+    """Get the Beads issue prefix from config or use default."""
+    try:
+        result = subprocess.run(
+            ["bd", "config", "get", "issue.prefix"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            prefix = result.stdout.strip()
+            # Handle "issue.prefix (not set)" message from bd
+            if "(not set)" not in prefix and prefix:
+                return prefix
+    except FileNotFoundError:
+        pass
+    return "beads-blueprint"
+
+
+def get_git_user() -> tuple[str, str]:
+    """Get git user name and email, with fallbacks."""
+    try:
+        name_result = subprocess.run(
+            ["git", "config", "user.name"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        email_result = subprocess.run(
+            ["git", "config", "user.email"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        name = name_result.stdout.strip() if name_result.returncode == 0 else "User"
+        email = (
+            email_result.stdout.strip()
+            if email_result.returncode == 0
+            else "user@example.com"
+        )
+        return name, email
+    except FileNotFoundError:
+        return "User", "user@example.com"
+
+
+def generate_id(prefix: str) -> str:
+    """Generate a random Beads issue ID."""
+    # Generate 3 random characters (alphanumeric lowercase)
+    suffix = "".join(
+        secrets.choice("0123456789abcdefghijklmnopqrstuvwxyz") for _ in range(3)
+    )
+    return f"{prefix}-{suffix}"
 
 
 def build_description(item: PlanItem, plan_path: Path) -> str:
@@ -85,34 +139,56 @@ def build_description(item: PlanItem, plan_path: Path) -> str:
     return ". ".join(parts)
 
 
-def build_command(item: PlanItem, plan_path: Path) -> str:
-    description = build_description(item, plan_path)
-    return (
-        f"bd create {ps_quote(item.title)} "
-        f"--description {ps_quote(description)} "
-        f"-p {item.priority} -t {item.item_type} --json"
-    )
+def build_issue_json(
+    item: PlanItem, plan_path: Path, prefix: str, owner: str, created_by: str
+) -> dict:
+    """Build a Beads issue as a JSON object."""
+    now = datetime.now(timezone.utc).astimezone().isoformat()
+    return {
+        "id": generate_id(prefix),
+        "title": item.title,
+        "description": build_description(item, plan_path),
+        "status": "open",
+        "priority": item.priority,
+        "issue_type": item.item_type,
+        "owner": owner,
+        "created_at": now,
+        "created_by": created_by,
+        "updated_at": now,
+    }
 
 
-def write_commands(
-    items: list[PlanItem], plan_path: Path, output_path: Path | None
+def write_jsonl(
+    items: list[PlanItem],
+    plan_path: Path,
+    output_path: Path,
+    prefix: str,
+    owner: str,
+    created_by: str,
 ) -> None:
-    commands = [build_command(item, plan_path) for item in items]
-    if output_path:
-        content = "\n".join(commands) + "\n"
-        output_path.write_text(content, encoding="utf-8")
-        print(f"Wrote {len(commands)} commands to {output_path}")
-    else:
-        for command in commands:
-            print(command)
+    """Write plan items as JSONL."""
+    issues = [
+        build_issue_json(item, plan_path, prefix, owner, created_by) for item in items
+    ]
+    with output_path.open("w", encoding="utf-8") as f:
+        for issue in issues:
+            f.write(json.dumps(issue, ensure_ascii=False) + "\n")
+    print(f"✓ Generated {len(issues)} issues in {output_path}")
+    print("  Import with: bd sync --import")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Convert plan markdown to Beads commands"
+        description="Convert plan markdown to Beads JSONL format"
     )
-    parser.add_argument("--plan", default="templates/plan_template.md")
-    parser.add_argument("--output", help="Write commands to a .ps1 file")
+    parser.add_argument(
+        "--plan",
+        default="templates/plan_template.md",
+        help="Path to plan markdown file",
+    )
+    parser.add_argument(
+        "--output", default="plan_issues.jsonl", help="Output JSONL file path"
+    )
     return parser.parse_args()
 
 
@@ -127,8 +203,11 @@ def main() -> int:
         print("No plan items found. Check the template format.")
         return 1
 
-    output_path = Path(args.output) if args.output else None
-    write_commands(items, plan_path, output_path)
+    prefix = get_prefix()
+    created_by, owner = get_git_user()
+    output_path = Path(args.output)
+
+    write_jsonl(items, plan_path, output_path, prefix, owner, created_by)
     return 0
 
 

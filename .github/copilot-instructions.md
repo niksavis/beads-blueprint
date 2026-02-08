@@ -29,7 +29,7 @@ Key points:
 3. Activate the venv before any Python command.
 4. No emoji in code, comments, or logs.
 5. Do not include real customer data in commits or generated files.
-6. Use Beads issue types: feature, task, subtask, bug.
+6. Use Beads issue types: epic, feature, task, bug, chore, merge-request, molecule (most common: feature, task, bug, epic, chore).
 7. Always include `--description` when creating Beads issues.
 8. Never use `bd edit`.
 
@@ -73,3 +73,52 @@ invoke `tools/bin/bd` directly. Bootstrap scripts auto-detect existing Beads ins
 **VS Code Integration**: Bootstrap automatically creates `.vscode/settings.json` with workspace-specific
 PATH configuration (`${workspaceFolder}\tools\bin`), enabling the VS Code Beads extension to find the
 local daemon without affecting global settings.
+
+## Plan to Beads Workflow
+
+Convert structured plans into Beads issues automatically using JSONL import.
+
+**Quick Start:**
+
+1. Create plan from template:
+
+   ```powershell
+   New-Item -ItemType Directory -Force -Path plans
+   Copy-Item templates\plan_template.md plans\my-feature.md
+   ```
+
+2. Edit `plans\my-feature.md` with your features and tasks
+
+3. Convert to JSONL:
+
+   ```powershell
+   .venv\Scripts\activate; python scripts\plan_to_beads.py --plan plans\my-feature.md --output plan_issues.jsonl
+   ```
+
+4. Import into Beads:
+
+   ```powershell
+   Get-Content plan_issues.jsonl | Add-Content .beads\issues.jsonl
+   bd sync --import
+   Remove-Item plan_issues.jsonl
+   ```
+
+5. Verify:
+   ```powershell
+   bd list
+   ```
+
+**Plan Template Format:**
+
+- `### Feature: Title [P1]` - Feature with priority (P1-P3)
+- `- Task: Title [P2]` - Task under feature (P1-P3)
+- `- Notes: Context` - Additional context for features or tasks
+
+**Benefits of JSONL approach:**
+
+- Batch import is much faster than individual commands
+- No shell escaping issues
+- Native Beads format
+- Can create multiple plans and import iteratively
+
+**See [agents.md](../agents.md) for detailed workflow and examples.**
