@@ -16,4 +16,5 @@
 - Bootstrap scripts with automatic OS/architecture detection (Windows, macOS, Linux, FreeBSD; x64, ARM64)
 - Project-local tools installation pattern (avoids PATH length limits)
 - Detection of existing Beads installations (skip-install option)
-- Release scripts for version bumping and changelog generation
+- LLM-assisted changelog generation workflow with JSON export for agent processing
+- Release scripts for version bumping and automated changelog scaffolding
