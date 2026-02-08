@@ -217,6 +217,58 @@ The plan template uses a hierarchical format:
 
 This generates issues with automatic parent tracking and descriptions including the plan source.
 
+## Release Workflow
+
+**Recommended approach (LLM-assisted changelog):**
+
+1. **Generate changelog draft from unreleased commits:**
+
+   ```powershell
+   .venv\Scripts\activate; python regenerate_changelog.py --preview --json
+   ```
+
+   This creates `changelog_draft.json` with all commits since the last tag, grouped by category.
+
+2. **Agent writes polished changelog:**
+   - Agent reads `changelog_draft.json`
+   - Writes user-friendly changelog section for version X.Y.Z
+   - Agent copies the formatted section to `changelog.md` (prepending as `## vX.Y.Z` section)
+
+3. **Bump version and finalize release:**
+
+   ```powershell
+   .venv\Scripts\activate; python release.py patch|minor|major
+   ```
+
+   This updates `version.py` and `readme.md` to match the new version.
+
+4. **Commit and tag:**
+
+   ```powershell
+   git add .
+   git commit -m "Release vX.Y.Z"
+   git tag vX.Y.Z
+   git push origin main --tags
+   ```
+
+**Alternative (manual TBD placeholders):**
+
+1. Bump version first (creates TBD placeholders):
+
+   ```powershell
+   .venv\Scripts\activate; python release.py patch|minor|major
+   ```
+
+2. Manually edit `changelog.md` to replace TBD sections.
+
+3. Commit and tag as above.
+
+**Key files:**
+
+- `regenerate_changelog.py` - Generate changelog drafts or TBD placeholders
+- `release.py` - Auto-bump version in version.py, readme.md, and changelog.md
+- `changelog_draft.json` - Structured commit data for LLM processing (temporary file)
+
 ## Code Standards
 
 - No emoji in code, comments, or logs.

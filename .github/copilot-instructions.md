@@ -49,10 +49,46 @@ source .venv/bin/activate && python scripts/plan_to_beads.py --help
 
 ## Release Workflow
 
-1. Generate or update changelog section:
-   `python regenerate_changelog.py --version 0.1.1`
-2. Bump version:
-   `python release.py patch|minor|major`
+**Recommended (LLM-assisted changelog):**
+
+1. Generate changelog draft:
+
+   ```powershell
+   .venv\Scripts\activate; python regenerate_changelog.py --preview --json
+   ```
+
+   Creates `changelog_draft.json` with commits since last tag.
+
+2. Ask Agent/LLM to write changelog:
+   - "Read changelog_draft.json and write a polished changelog section for v0.1.1"
+   - Agent generates user-friendly Features/Bug Fixes/Improvements sections
+   - Copy agent's output to `changelog.md` as `## v0.1.1` section (prepend it)
+
+3. Bump version:
+
+   ```powershell
+   .venv\Scripts\activate; python release.py patch|minor|major
+   ```
+
+   Updates `version.py` and `readme.md` automatically.
+
+4. Commit and tag:
+   ```powershell
+   git add . && git commit -m "Release v0.1.1"
+   git tag v0.1.1 && git push origin main --tags
+   ```
+
+**Alternative (manual TBD placeholders):**
+
+1. Bump version (creates TBD placeholders):
+
+   ```powershell
+   python release.py patch|minor|major
+   ```
+
+2. Edit `changelog.md` manually to replace TBD sections
+
+3. Commit and tag as above
 
 ## Beads Bootstrap
 
