@@ -1,0 +1,41 @@
+﻿# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor / tooling
+.idea/
+.ruff_cache/
+
+# Environment files
+.env
+
+# Generated scripts and drafts
+beads_commands.ps1
+changelog_draft.json
+
+# Installed CLI tools (Beads installation)
+tools/
+!tools/README.md
+
+# Temporary debug/test/verification scripts (root level only)
+/check_*.py
+/debug_*.py
+/test_*.py
+/verify_*.py
+/analyze_*.py
+/temp_*.py
