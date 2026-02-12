@@ -14,7 +14,14 @@ When the user asks to "initialize the project", "setup the project", or similar:
    - `.beads/issues.jsonl` exists → Beads already initialized
    - If ANY of these exist, warn the user and ask for confirmation before proceeding
 
-2. **Initialization sequence (PowerShell):**
+2. **Verify Python is installed:**
+   - If `python` is not available, stop and guide the user to install Python from <https://www.python.org/downloads/>
+   - On Windows, remind the user to check “Add Python to PATH” during installation
+
+3. **Narrate background steps:**
+   - Before each major step (venv creation, Beads install, VS Code setup, `bd init`, team setup), explain what will happen and why
+
+4. **Initialization sequence (PowerShell):**
 
    ```powershell
    # Create Python environment
@@ -39,7 +46,13 @@ When the user asks to "initialize the project", "setup the project", or similar:
    - Or manually install: See [scripts/readme.md](scripts/readme.md) for manual installation steps
    - The script will provide clear instructions if it cannot run automatically
 
-3. **Initialization sequence (bash):**
+   **To skip push confirmations (for automation):**
+
+   ```powershell
+   & .\scripts\setup_team.ps1 -YesToAll
+   ```
+
+5. **Initialization sequence (bash):**
 
    ```bash
    # Create Python environment
@@ -59,16 +72,46 @@ When the user asks to "initialize the project", "setup the project", or similar:
    bash scripts/setup_team.sh
    ```
 
-4. **Team Setup:** The `setup_team` script will:
+   **To skip push confirmations (for automation):**
+
+   ```bash
+   bash scripts/setup_team.sh --yes-to-all
+   ```
+
+6. **Team Setup:** The `setup_team` script will:
    - Run `bd doctor --fix` to resolve common issues
    - Configure git remote (prompts if not set)
+   - **Synchronize with remote repository** (handles divergent histories automatically)
    - Create and push `beads-sync` branch for team collaboration
    - Set up git hooks and upstream tracking
    - Perform initial sync
 
-5. **VS Code Integration:** The bootstrap script automatically creates `.vscode/settings.json` with workspace-specific PATH configuration, enabling the VS Code Beads extension to find the local daemon.
+   **Push Safety:**
+   - Before pushing anything to remote, the script will show what it's about to push
+   - You'll be asked to confirm each push operation (y/n)
+   - Use `-YesToAll` (PowerShell) or `--yes-to-all` (bash) to skip confirmations for automated setups
+   - If no commits exist and the working tree has files, the script will prompt to create an initial commit
 
-6. **Confirmation:** After successful initialization, inform the user they can now create a plan using `templates/plan_template.md`
+   **Remote Synchronization:**
+   - If the remote repository was initialized with files (README, LICENSE, etc.), the script automatically merges using `--allow-unrelated-histories`
+   - If merge conflicts occur, the script will exit with clear instructions to resolve them manually
+   - After resolving conflicts, simply re-run the setup_team script
+
+   **Common Scenarios:**
+   - Fresh local repo + empty remote → Works automatically
+   - Fresh local repo + remote with README → Automatically merges
+   - Existing local commits + empty remote → Pushes local commits
+   - Existing local commits + remote with files → Merges and resolves conflicts if needed
+
+7. **VS Code Integration:** The bootstrap script automatically creates `.vscode/settings.json` with workspace-specific PATH configuration, enabling the VS Code Beads extension to find the local daemon.
+
+8. **Confirmation:** After successful initialization, inform the user they can now create a plan using `templates/plan_template.md`
+
+9. **Post-initialization workflow:**
+   - Ask the user for their first feature
+   - Create a plan file in `plans/` based on `templates/plan_template.md`
+   - Ask if the plan is ready to create Beads from it
+   - If yes, convert the plan to JSONL, import into Beads, and ask which Bead to start first
 
 ## Platform and Tooling
 

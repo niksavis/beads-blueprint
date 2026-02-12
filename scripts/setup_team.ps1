@@ -5,6 +5,7 @@
 param(
     [string]$RemoteUrl = "",
     [switch]$SkipRemote = $false,
+    [switch]$YesToAll = $false,
     [switch]$Help = $false
 )
 
@@ -15,19 +16,27 @@ Team Setup Script for Beads
 This script configures your Beads project for team collaboration:
   1. Fixes common Beads configuration issues
   2. Sets up git remote (if needed)
-  3. Creates beads-sync branch for issue synchronization
-  4. Configures git hooks
-  5. Performs initial sync
+  3. Synchronizes with remote repository (handles divergent histories)
+  4. Creates beads-sync branch for issue synchronization
+  5. Configures git hooks and upstream tracking
+    6. Performs initial Beads sync
+    7. Optionally creates an initial git commit
 
 Usage:
   .\scripts\setup_team.ps1                              # Interactive mode
   .\scripts\setup_team.ps1 -RemoteUrl <url>             # Specify remote URL
   .\scripts\setup_team.ps1 -SkipRemote                  # Skip remote setup
+  .\scripts\setup_team.ps1 -YesToAll                    # Skip all confirmations
   .\scripts\setup_team.ps1 -Help                        # Show this help
 
 Examples:
   .\scripts\setup_team.ps1 -RemoteUrl "https://github.com/user/repo.git"
   .\scripts\setup_team.ps1 -SkipRemote  # For local-only testing
+
+Notes:
+  - If remote repository was initialized with files (README, etc.),
+    the script will automatically merge with --allow-unrelated-histories
+  - If merge conflicts occur, you'll be prompted to resolve them manually
 
 "@
     exit 0
@@ -37,6 +46,18 @@ $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot\..
 
 Write-Host "`n=== Beads Team Setup ===" -ForegroundColor Cyan
+Write-Host "`nThis script will:" -ForegroundColor White
+Write-Host "  1. Fix common Beads configuration issues" -ForegroundColor Gray
+Write-Host "  2. Configure git remote (if needed)" -ForegroundColor Gray
+Write-Host "  3. Synchronize with remote repository" -ForegroundColor Gray
+Write-Host "  4. Create beads-sync branch for team collaboration" -ForegroundColor Gray
+Write-Host "  5. Set up git hooks and upstream tracking" -ForegroundColor Gray
+Write-Host "  6. Perform initial Beads sync" -ForegroundColor Gray
+Write-Host "  7. Optionally create an initial git commit" -ForegroundColor Gray
+if (-not $YesToAll) {
+    Write-Host "`nNote: You'll be asked to confirm before any push to remote repository" -ForegroundColor Yellow
+}
+Write-Host ""
 
 # Check if bd is available
 $bdPath = Get-Command bd -ErrorAction SilentlyContinue
@@ -74,6 +95,7 @@ if (-not $hasRemote -and -not $SkipRemote) {
     if ($RemoteUrl) {
         Write-Host "Adding remote 'origin': $RemoteUrl"
         git remote add origin $RemoteUrl
+        $hasRemote = $RemoteUrl
         Write-Host "Remote added successfully" -ForegroundColor Green
     }
     else {
@@ -91,6 +113,82 @@ else {
 $currentBranch = git rev-parse --abbrev-ref HEAD 2>$null
 if (-not $currentBranch) {
     $currentBranch = "main"
+}
+
+# Ensure repo has an initial commit before syncing/pushing
+$hasCommits = git rev-parse HEAD 2>$null
+$workingTreeChanges = git status --porcelain 2>$null
+if (-not $hasCommits -and $workingTreeChanges) {
+    Write-Host "`nStep 2b: No commits found. An initial commit is required before pushing." -ForegroundColor Yellow
+    Write-Host "This will commit all current files with message: 'chore: initial commit'" -ForegroundColor Yellow
+    
+    $shouldCommit = $YesToAll
+    if (-not $YesToAll) {
+        $response = Read-Host "Create initial commit now? (y/n)"
+        $shouldCommit = $response -eq 'y' -or $response -eq 'Y' -or $response -eq 'yes'
+    }
+    
+    if ($shouldCommit) {
+        git add -A 2>&1 | Out-String | Write-Host
+        git commit -m "chore: initial commit" 2>&1 | Out-String | Write-Host
+        Write-Host "Initial commit created" -ForegroundColor Green
+    }
+    else {
+        Write-Host "Skipped initial commit. You can commit later with: git add -A; git commit -m \"chore: initial commit\"" -ForegroundColor Yellow
+    }
+}
+
+# Synchronize with remote if it exists and has content
+if ($hasRemote -and -not $SkipRemote) {
+    Write-Host "`nStep 2a: Synchronizing with remote..." -ForegroundColor Green
+    
+    # Fetch remote branches
+    Write-Host "Fetching from remote..."
+    git fetch origin 2>&1 | Out-String | Write-Host
+    
+    # Check if remote has the current branch
+    $remoteBranch = git ls-remote --heads origin $currentBranch 2>$null
+    
+    if ($remoteBranch) {
+        Write-Host "Remote has $currentBranch branch. Checking for divergence..."
+        
+        # Check if we have local commits
+        $hasLocalCommits = git rev-parse HEAD 2>$null
+        
+        if ($hasLocalCommits) {
+            # Check if local and remote have diverged
+            $remoteCommits = git rev-list "origin/$currentBranch" --count 2>$null
+            $localCommits = git rev-list HEAD --count 2>$null
+            
+            if ($remoteCommits -and $localCommits) {
+                # Both have commits - need to merge
+                Write-Host "Both local and remote have commits. Attempting to merge..."
+                git merge "origin/$currentBranch" --allow-unrelated-histories -m "chore: merge remote changes" 2>&1 | Out-String | Write-Host
+                
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "WARNING: Merge conflict detected. Please resolve conflicts manually:" -ForegroundColor Yellow
+                    Write-Host "  1. Resolve conflicts in the affected files" -ForegroundColor Yellow
+                    Write-Host "  2. Run: git add ." -ForegroundColor Yellow
+                    Write-Host "  3. Run: git commit -m 'chore: resolve merge conflicts'" -ForegroundColor Yellow
+                    Write-Host "  4. Re-run this script" -ForegroundColor Yellow
+                    exit 1
+                }
+                
+                Write-Host "Successfully merged remote changes" -ForegroundColor Green
+            }
+            else {
+                Write-Host "Local and remote are in sync" -ForegroundColor Green
+            }
+        }
+        else {
+            # No local commits, just pull
+            Write-Host "No local commits. Pulling from remote..."
+            git pull origin $currentBranch 2>&1 | Out-String | Write-Host
+        }
+    }
+    else {
+        Write-Host "Remote does not have $currentBranch branch yet. Will push later." -ForegroundColor Yellow
+    }
 }
 
 Write-Host "`nStep 3: Checking beads-sync branch..." -ForegroundColor Green
@@ -114,8 +212,24 @@ if (-not $hasSyncBranch) {
     
     # Push to remote if available
     if ($hasRemote -and -not $SkipRemote) {
-        Write-Host "Pushing beads-sync to remote..."
-        git push -u origin beads-sync 2>&1 | Out-String | Write-Host
+        Write-Host "`nReady to push beads-sync branch to remote" -ForegroundColor Yellow
+        Write-Host "Repository: $hasRemote" -ForegroundColor Cyan
+        Write-Host "Branch: beads-sync" -ForegroundColor Cyan
+        
+        $shouldPush = $YesToAll
+        if (-not $YesToAll) {
+            $response = Read-Host "Push beads-sync branch to remote? (y/n)"
+            $shouldPush = $response -eq 'y' -or $response -eq 'Y' -or $response -eq 'yes'
+        }
+        
+        if ($shouldPush) {
+            Write-Host "Pushing beads-sync to remote..." -ForegroundColor Green
+            git push -u origin beads-sync 2>&1 | Out-String | Write-Host
+            Write-Host "✓ beads-sync branch pushed successfully" -ForegroundColor Green
+        }
+        else {
+            Write-Host "Skipped pushing beads-sync branch. You can push later with: git push -u origin beads-sync" -ForegroundColor Yellow
+        }
     }
     
     # Return to original branch
@@ -138,8 +252,24 @@ if ($hasRemote -and -not $SkipRemote) {
             git branch --set-upstream-to=origin/$currentBranch $currentBranch
         }
         else {
-            Write-Host "Pushing $currentBranch to remote..."
-            git push -u origin $currentBranch 2>&1 | Out-String | Write-Host
+            Write-Host "`nReady to push $currentBranch branch to remote" -ForegroundColor Yellow
+            Write-Host "Repository: $hasRemote" -ForegroundColor Cyan
+            Write-Host "Branch: $currentBranch" -ForegroundColor Cyan
+            
+            $shouldPush = $YesToAll
+            if (-not $YesToAll) {
+                $response = Read-Host "Push $currentBranch branch to remote? (y/n)"
+                $shouldPush = $response -eq 'y' -or $response -eq 'Y' -or $response -eq 'yes'
+            }
+            
+            if ($shouldPush) {
+                Write-Host "Pushing $currentBranch to remote..." -ForegroundColor Green
+                git push -u origin $currentBranch 2>&1 | Out-String | Write-Host
+                Write-Host "✓ $currentBranch branch pushed successfully" -ForegroundColor Green
+            }
+            else {
+                Write-Host "Skipped pushing $currentBranch branch. You can push later with: git push -u origin $currentBranch" -ForegroundColor Yellow
+            }
         }
         Write-Host "Upstream configured" -ForegroundColor Green
     }

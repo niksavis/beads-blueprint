@@ -10,17 +10,40 @@ Key points:
 
 - Check if already initialized (`.venv`, `tools/bin/bd*`, `.beads/issues.jsonl`)
 - Warn and ask for confirmation if any components already exist
+- Verify Python is installed; if missing, stop and guide the user to https://www.python.org/downloads/
+- Narrate each major step (venv creation, Beads install, VS Code setup, `bd init`, team setup)
 - Run the initialization sequence for the user's shell
 - **CRITICAL**: Run team setup script (`setup_team.ps1` or `setup_team.sh`) after `bd init`
 - Confirm completion and guide them to create a plan
+
+Post-initialization workflow:
+
+- Ask the user for their first feature
+- Create a plan file in `plans/` based on `templates/plan_template.md`
+- Ask if the plan is ready to create Beads from it
+- If yes, convert the plan to JSONL, import into Beads, and ask which Bead to start first
 
 **Team Setup Script** configures:
 
 - Runs `bd doctor --fix` automatically
 - Git remote and upstream tracking
+- **Synchronizes with remote repository** (handles divergent histories automatically)
 - `beads-sync` branch for team collaboration
 - Git hooks for Beads
 - Initial sync to share issues with team
+
+**Remote Synchronization:**
+
+- If the remote repository was initialized with files (README, LICENSE, etc.), the script automatically merges using `--allow-unrelated-histories`
+- If merge conflicts occur, the script will exit with clear instructions to resolve them manually
+- After resolving conflicts, simply re-run the setup_team script
+
+**Push Safety:**
+
+- Before any push to remote, users are shown what will be pushed and asked to confirm (y/n)
+- Use `-YesToAll` (PowerShell) or `--yes-to-all` (bash) to skip confirmations for automated workflows
+- Each push operation clearly displays the repository URL and branch name before proceeding
+- If no commits exist and the working tree has files, the script prompts to create an initial commit
 
 ## Core Rules
 
