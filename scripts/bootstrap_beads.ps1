@@ -252,7 +252,8 @@ if (-not $SkipInstall) {
     $taskDefinition = @{
         "label"          = $taskLabel
         "type"           = "shell"
-        "command"        = "bd daemon start --auto-commit"
+        "command"        = "`${workspaceFolder}\tools\bin\bd.exe"
+        "args"           = @("daemon", "start", "--auto-commit")
         "isBackground"   = $true
         "problemMatcher" = @()
         "presentation"   = @{
@@ -262,11 +263,6 @@ if (-not $SkipInstall) {
             "panel"            = "shared"
             "showReuseMessage" = $false
             "clear"            = $false
-        }
-        "options"        = @{
-            "env" = @{
-                "PATH" = "`${env:PATH};`${workspaceFolder}\tools\bin"
-            }
         }
         "runOptions"     = @{
             "runOn" = "folderOpen"

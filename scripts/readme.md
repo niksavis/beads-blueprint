@@ -16,9 +16,9 @@ This folder contains bootstrap and conversion scripts for the Beads template.
 The bootstrap scripts also create a VS Code task to start the Beads daemon on folder open:
 
 - Task label: Start Beads Daemon with Auto-Sync
-- Command: bd daemon start --auto-commit
+- Command: `${workspaceFolder}/tools/bin/bd daemon start --auto-commit`
 - Task file: .vscode/tasks.json (created if missing)
-- Note: Add `--auto-push` to the command after configuring a git remote for automatic pushing
+- Note: Add `--auto-push` to the args after configuring a git remote for automatic pushing
 
 ### Team Setup
 

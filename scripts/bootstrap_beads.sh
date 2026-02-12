@@ -78,7 +78,8 @@ EOF
     {
       "label": "Start Beads Daemon with Auto-Sync",
       "type": "shell",
-      "command": "bd daemon start --auto-commit",
+      "command": "${workspaceFolder}/tools/bin/bd",
+      "args": ["daemon", "start", "--auto-commit"],
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -88,11 +89,6 @@ EOF
         "panel": "shared",
         "showReuseMessage": false,
         "clear": false
-      },
-      "options": {
-        "env": {
-          "PATH": "${env:PATH};${workspaceFolder}\\tools\\bin"
-        }
       },
       "runOptions": {
         "runOn": "folderOpen"
