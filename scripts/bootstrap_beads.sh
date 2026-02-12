@@ -62,6 +62,47 @@ EOF
     echo "Created workspace settings with terminal PATH configuration"
     echo "VS Code Beads extension will now find the local daemon"
   fi
+
+  TASKS_FILE="$VSCODE_DIR/tasks.json"
+  if [ -f "$TASKS_FILE" ]; then
+    if grep -q '"label": "Start Beads Daemon with Auto-Sync"' "$TASKS_FILE" 2>/dev/null; then
+      echo "Beads daemon task already exists in tasks.json"
+    else
+      echo "Note: tasks.json exists. Please add the Beads daemon task manually."
+    fi
+  else
+    cat > "$TASKS_FILE" << 'EOF'
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Beads Daemon with Auto-Sync",
+      "type": "shell",
+      "command": "bd daemon start --auto-commit --auto-push",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "reveal": "never",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "options": {
+        "env": {
+          "PATH": "${env:PATH};${workspaceFolder}\\tools\\bin"
+        }
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}
+EOF
+    echo "Created tasks.json to start the Beads daemon on folder open"
+  fi
 fi
 
 "$SCRIPT_ROOT/configure_beads.sh"

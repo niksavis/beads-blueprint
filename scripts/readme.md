@@ -13,6 +13,12 @@ This folder contains bootstrap and conversion scripts for the Beads template.
 - **configure_beads.sh**: Configure git merge driver for .beads/issues.jsonl (bash).
 - **bootstrap_beads.sh**: Runs install + configure and verifies bd (bash).
 
+The bootstrap scripts also create a VS Code task to start the Beads daemon on folder open:
+
+- Task label: Start Beads Daemon with Auto-Sync
+- Command: bd daemon start --auto-commit --auto-push
+- Task file: .vscode/tasks.json (created if missing)
+
 ### Team Setup
 
 - **setup_team.ps1**: Configure project for team collaboration (PowerShell).

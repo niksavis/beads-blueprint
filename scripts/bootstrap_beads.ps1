@@ -245,6 +245,72 @@ if (-not $SkipInstall) {
         Write-Host "Created workspace settings with terminal PATH configuration" -ForegroundColor Cyan
         Write-Host "VS Code Beads extension will now find the local daemon" -ForegroundColor Green
     }
+
+    # Create or update workspace tasks to start the Beads daemon
+    $tasksPath = Join-Path $vscodeDir "tasks.json"
+    $taskLabel = "Start Beads Daemon with Auto-Sync"
+    $taskDefinition = @{
+        "label"          = $taskLabel
+        "type"           = "shell"
+        "command"        = "bd daemon start --auto-commit --auto-push"
+        "isBackground"   = $true
+        "problemMatcher" = @()
+        "presentation"   = @{
+            "echo"             = $false
+            "reveal"           = "never"
+            "focus"            = $false
+            "panel"            = "shared"
+            "showReuseMessage" = $false
+            "clear"            = $false
+        }
+        "options"        = @{
+            "env" = @{
+                "PATH" = "`${env:PATH};`${workspaceFolder}\tools\bin"
+            }
+        }
+        "runOptions"     = @{
+            "runOn" = "folderOpen"
+        }
+    }
+
+    if (Test-Path $tasksPath) {
+        try {
+            $existingTasks = Get-Content $tasksPath -Raw | ConvertFrom-Json -AsHashtable
+            if (-not $existingTasks.ContainsKey("tasks")) {
+                $existingTasks["tasks"] = @()
+            }
+
+            $taskExists = $false
+            foreach ($task in $existingTasks["tasks"]) {
+                if ($task.label -eq $taskLabel) {
+                    $taskExists = $true
+                    break
+                }
+            }
+
+            if (-not $taskExists) {
+                $existingTasks["version"] = "2.0.0"
+                $existingTasks["tasks"] += $taskDefinition
+                $existingTasks | ConvertTo-Json -Depth 10 | Set-Content $tasksPath
+                Write-Host "Added Beads daemon task to existing tasks.json" -ForegroundColor Cyan
+            }
+            else {
+                Write-Host "Beads daemon task already exists in tasks.json" -ForegroundColor Yellow
+            }
+        }
+        catch {
+            Write-Host "Warning: Could not parse existing tasks.json. Skipping task configuration." -ForegroundColor Yellow
+        }
+    }
+    else {
+        $tasksContent = @{
+            "version" = "2.0.0"
+            "tasks"   = @($taskDefinition)
+        }
+
+        $tasksContent | ConvertTo-Json -Depth 10 | Set-Content $tasksPath
+        Write-Host "Created tasks.json to start the Beads daemon on folder open" -ForegroundColor Cyan
+    }
 }
 
 # ===== CONFIGURE GIT =====
