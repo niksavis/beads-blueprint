@@ -78,7 +78,7 @@ EOF
     {
       "label": "Start Beads Daemon with Auto-Sync",
       "type": "shell",
-      "command": "bd daemon start --auto-commit --auto-push",
+      "command": "bd daemon start --auto-commit",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
