@@ -328,20 +328,57 @@ if (-not (Test-Path $gitDir)) {
     $currentDir = $repoRoot
     for ($i = 0; $i -lt 3; $i++) {
         $parent = Split-Path $currentDir -Parent
+        if ([string]::IsNullOrWhiteSpace($parent)) {
+            break
+        }
         if (Test-Path (Join-Path $parent ".git")) {
             $repoRoot = $parent
             Write-Host "Found git repository at: $repoRoot" -ForegroundColor Cyan
             Set-Location $repoRoot
             break
         }
+        if ($parent -eq $currentDir) {
+            break
+        }
         $currentDir = $parent
     }
 }
 
-git config merge.beads.name "Beads JSONL merge"
-git config merge.beads.driver "bd merge %A %O %B %A --debug"
+$gitDir = Join-Path $repoRoot ".git"
+if (Test-Path $gitDir) {
+    git config merge.beads.name "Beads JSONL merge"
+    git config merge.beads.driver "bd merge %A %O %B %A --debug"
+    Write-Host "Configured git merge driver for .beads/issues.jsonl" -ForegroundColor Cyan
+}
+else {
+    $didInit = $false
+    try {
+        $Host.UI.RawUI | Out-Null
+        $response = Read-Host "No .git found. Initialize a git repository here? (y/n)"
+        if ($response -match "^[Yy]") {
+            git init 2>&1 | Out-String | Write-Host
+            $didInit = $true
+        }
+    }
+    catch {
+        # Non-interactive mode
+    }
 
-Write-Host "Configured git merge driver for .beads/issues.jsonl" -ForegroundColor Cyan
+    $gitDir = Join-Path $repoRoot ".git"
+    if ($didInit -and (Test-Path $gitDir)) {
+        git config merge.beads.name "Beads JSONL merge"
+        git config merge.beads.driver "bd merge %A %O %B %A --debug"
+        Write-Host "Configured git merge driver for .beads/issues.jsonl" -ForegroundColor Cyan
+    }
+    else {
+        Write-Host "Warning: Not a git repository. Skipping git merge driver configuration." -ForegroundColor Yellow
+        Write-Host "Missing features until git is initialized:" -ForegroundColor Yellow
+        Write-Host "- Git merge driver for .beads/issues.jsonl" -ForegroundColor Yellow
+        Write-Host "- Repository and clone IDs during bd init" -ForegroundColor Yellow
+        Write-Host "- Team setup and sync workflows" -ForegroundColor Yellow
+        Write-Host "To enable later: run 'git init', then rerun bootstrap_beads.ps1 or configure_beads.ps1." -ForegroundColor Yellow
+    }
+}
 
 # ===== VERIFICATION =====
 Write-Host ""

@@ -105,7 +105,34 @@ EOF
   fi
 fi
 
-"$SCRIPT_ROOT/configure_beads.sh"
+SKIP_GIT_CONFIG=false
+REPO_ROOT="$(cd "$SCRIPT_ROOT/.." && pwd)"
+if [ ! -d "$REPO_ROOT/.git" ]; then
+  if [ -t 0 ]; then
+    read -p "No .git found. Initialize a git repository here? (y/n): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      (cd "$REPO_ROOT" && git init)
+    else
+      SKIP_GIT_CONFIG=true
+    fi
+  else
+    SKIP_GIT_CONFIG=true
+  fi
+
+  if [ "$SKIP_GIT_CONFIG" = true ]; then
+    echo "Warning: Not a git repository. Skipping git merge driver configuration."
+    echo "Missing features until git is initialized:"
+    echo "- Git merge driver for .beads/issues.jsonl"
+    echo "- Repository and clone IDs during bd init"
+    echo "- Team setup and sync workflows"
+    echo "To enable later: run 'git init', then rerun bootstrap_beads.sh or configure_beads.sh."
+  fi
+fi
+
+if [ "$SKIP_GIT_CONFIG" != true ]; then
+  "$SCRIPT_ROOT/configure_beads.sh"
+fi
 
 if [ "$SKIP_INSTALL" != "--skip-install" ]; then
   BIN_DIR="$TOOLS_ROOT/bin"
