@@ -54,8 +54,15 @@ Write-Host "  4. Create beads-sync branch for team collaboration" -ForegroundCol
 Write-Host "  5. Set up git hooks and upstream tracking" -ForegroundColor Gray
 Write-Host "  6. Perform initial Beads sync" -ForegroundColor Gray
 Write-Host "  7. Optionally create an initial git commit" -ForegroundColor Gray
+Write-Host "`nNote: This step is optional for solo or local-only work." -ForegroundColor Yellow
+Write-Host "It will create the beads-sync branch and may push it to your remote." -ForegroundColor Yellow
 if (-not $YesToAll) {
     Write-Host "`nNote: You'll be asked to confirm before any push to remote repository" -ForegroundColor Yellow
+    $continue = Read-Host "Continue with team setup? (y/n)"
+    if ($continue -notin @("y", "Y", "yes", "YES")) {
+        Write-Host "Canceled team setup." -ForegroundColor Yellow
+        exit 0
+    }
 }
 Write-Host ""
 

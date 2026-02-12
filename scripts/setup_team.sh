@@ -78,8 +78,16 @@ echo -e "  4. Create beads-sync branch for team collaboration"
 echo -e "  5. Set up git hooks and upstream tracking"
 echo -e "  6. Perform initial Beads sync"
 echo -e "  7. Optionally create an initial git commit"
+echo -e "\nNote: This step is optional for solo or local-only work."
+echo -e "It will create the beads-sync branch and may push it to your remote."
 if [ "$YES_TO_ALL" != true ]; then
     echo -e "\nNote: You'll be asked to confirm before any push to remote repository"
+    read -p "Continue with team setup? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Canceled team setup."
+        exit 0
+    fi
 fi
 echo ""
 

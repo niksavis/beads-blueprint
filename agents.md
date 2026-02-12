@@ -37,7 +37,7 @@ When the user asks to "initialize the project", "setup the project", or similar:
    # Initialize Beads
    bd init
    
-   # Configure for team collaboration
+   # Optional: configure for team collaboration (creates/pushes beads-sync)
    & .\scripts\setup_team.ps1
    ```
 
@@ -68,7 +68,7 @@ When the user asks to "initialize the project", "setup the project", or similar:
    # Initialize Beads
    bd init
    
-   # Configure for team collaboration
+   # Optional: configure for team collaboration (creates/pushes beads-sync)
    bash scripts/setup_team.sh
    ```
 
@@ -78,7 +78,9 @@ When the user asks to "initialize the project", "setup the project", or similar:
    bash scripts/setup_team.sh --yes-to-all
    ```
 
-6. **Team Setup:** The `setup_team` script will:
+6. **Team Setup (Optional):** The `setup_team` script will:
+   - This step is optional for solo or local-only work
+   - It creates the `beads-sync` branch and may push it to the remote
    - Run `bd doctor --fix` to resolve common issues
    - Configure git remote (prompts if not set)
    - **Synchronize with remote repository** (handles divergent histories automatically)
