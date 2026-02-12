@@ -37,6 +37,10 @@ When the user asks to "initialize the project", "setup the project", or similar:
    # Initialize Beads
    bd init
    
+   # Start daemon if not already running (first-time setup)
+   # Subsequent VS Code opens will auto-start via tasks.json
+   if (-not (bd daemon status 2>$null)) { bd daemon start --auto-commit --auto-push }
+   
    # Optional: configure for team collaboration (creates/pushes beads-sync)
    & .\scripts\setup_team.ps1
    ```
@@ -67,6 +71,10 @@ When the user asks to "initialize the project", "setup the project", or similar:
    
    # Initialize Beads
    bd init
+   
+   # Start daemon if not already running (first-time setup)
+   # Subsequent VS Code opens will auto-start via tasks.json
+   bd daemon status 2>/dev/null || bd daemon start --auto-commit --auto-push
    
    # Optional: configure for team collaboration (creates/pushes beads-sync)
    bash scripts/setup_team.sh

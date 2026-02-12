@@ -150,3 +150,6 @@ else
   echo "Verification:"
   bd --version
 fi
+
+echo ""
+echo "Bootstrap complete!"
