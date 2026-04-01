@@ -7,6 +7,17 @@ description: "Use when onboarding a fresh clone, setting up Beads on a new machi
 
 Beads in this repository uses a local Dolt database and Git-based backup sync.
 
+## Always-On Context Budget
+
+For always-on compatibility files (`.github/copilot-instructions.md`, `agents.md`):
+
+- Keep setup guidance to a short readiness gate only.
+- Do not inline full installation and bootstrap playbooks.
+- Route detailed setup and recovery steps to:
+  - `.github/skills/environment-readiness/SKILL.md`
+  - `.github/agents/development-environment-bootstrap.agent.md`
+  - `.github/prompts/initialize-development-environment.prompt.md`
+
 ## Critical Model
 
 - There is no Dolt remote server for team sync.

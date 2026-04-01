@@ -1,6 +1,6 @@
 ---
 name: release-management
-description: "Use when preparing a release: generate changelog drafts, write concise release notes, bump semantic versions, and optionally create release tags."
+description: "Use when preparing a release: generate changelog drafts, write concise release notes, and bump semantic versions for no-tag template release workflows."
 ---
 
 # Skill: Release Management
@@ -22,14 +22,8 @@ python regenerate_changelog.py --preview --json
 python release.py patch|minor|major
 ```
 
-4. Optionally create tag:
-
-```bash
-python release.py patch --tag
-```
-
 ## Guardrails
 
 - Do not add secrets/customer data to release notes.
 - Keep release notes short and benefit-oriented.
-- Preserve lightweight release behavior unless user requests otherwise.
+- Keep template releases tag-free unless the user explicitly changes policy.

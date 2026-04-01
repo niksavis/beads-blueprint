@@ -2,7 +2,7 @@
 
 Python-first template repository for teams using Beads as the issue tracker.
 
-**Version:** 1.0.0
+**Version:** 1.0.2
 
 ## What This Template Provides
 
@@ -20,7 +20,7 @@ Python-first template repository for teams using Beads as the issue tracker.
   - skills
   - prompts
   - hook templates
-- Lightweight release flow with changelog draft, version bumping, and optional tagging
+- Lightweight release flow with changelog draft and version bumping
 - Minimal GitHub Actions workflows for lint and build checks
 
 ## Prerequisites
@@ -184,11 +184,7 @@ python release.py minor
 python release.py major
 ```
 
-1. Optionally create a git tag during release bump:
-
-```bash
-python release.py patch --tag
-```
+1. Template release flow does not create git tags.
 
 ## VS Code Defaults
 

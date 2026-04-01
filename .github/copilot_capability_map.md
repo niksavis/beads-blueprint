@@ -8,6 +8,7 @@
 ## Core Capability Areas
 
 - Environment bootstrap and recovery:
+  - Skill: .github/skills/environment-readiness/SKILL.md
   - Agent: .github/agents/development-environment-bootstrap.agent.md
   - Prompt: .github/prompts/initialize-development-environment.prompt.md
 

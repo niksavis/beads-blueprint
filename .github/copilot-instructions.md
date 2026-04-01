@@ -15,29 +15,22 @@ This is the canonical always-on policy for this template repository.
 - Keep product/application code stack-agnostic; use Python for repository automation and setup.
 - Use Beads as the primary issue tracker.
 - Keep setup and quality gates simple, deterministic, and reproducible.
+- Keep always-on instructions minimal; route heavy workflows to on-demand skills/agents.
 
-## Python Prerequisite Guidance
+## Environment Readiness Gate
 
-If `python` is unavailable during onboarding:
-
-- Instruct user to install CPython from `python.org` before running setup.
-- On Windows, prefer the full 64-bit installer and enable `Add python.exe to PATH`.
-- Ask user to restart VS Code and open a new terminal session after install/PATH changes.
-- Resume with: `python scripts/initialize_environment.py --yes-to-all`
-
-## Initialization Policy
-
-When user asks to initialize the repository, run:
-
-1. `python scripts/initialize_environment.py --yes-to-all`
-2. `bd --version`
-3. `python validate.py --fast`
-4. `python install_hooks.py --check`
-
-If Beads has not been initialized yet:
-
-- `bd init`
-- `bd bootstrap`
+- Do not run full environment initialization by default.
+- Run readiness checks only when setup status is unknown, user asks onboarding, or tool checks fail.
+- Preflight checks:
+  1. `python --version`
+  2. `bd --version`
+  3. `dolt version`
+  4. `python install_hooks.py --check` (if Python is available)
+- If checks pass, continue with requested task and skip setup flow.
+- If checks fail, route to dedicated onboarding assets:
+  - Skill: `.github/skills/environment-readiness/SKILL.md`
+  - Agent: `.github/agents/development-environment-bootstrap.agent.md`
+  - Prompt: `.github/prompts/initialize-development-environment.prompt.md`
 
 ## Terminal Policy
 
@@ -95,8 +88,7 @@ Never require shell-specific setup scripts in this template.
   - `python regenerate_changelog.py --preview --json`
 - Bump version with:
   - `python release.py patch|minor|major`
-- Optional tagging:
-  - `python release.py patch --tag`
+- Do not create or require git tags for template releases.
 - Keep changelog user-focused and concise
 
 ## Repository Hygiene

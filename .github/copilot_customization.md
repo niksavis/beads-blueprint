@@ -24,6 +24,7 @@ This file lists the reusable Copilot artifacts included by this template.
 ## Skills
 
 - .github/skills/beads-workflow/SKILL.md
+- .github/skills/environment-readiness/SKILL.md
 - .github/skills/dev-tools-setup/SKILL.md
 - .github/skills/release-management/SKILL.md
 - .github/skills/cli-search-tools/SKILL.md

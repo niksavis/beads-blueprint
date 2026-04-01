@@ -2,11 +2,36 @@
 
 ## Unreleased
 
+### Notes
+
+- No unreleased changes yet.
+
+## v1.0.2
+
+Released: 2026-04-02
+
+### v1.0.2 Features
+
+- Added an `environment-readiness` skill to run preflight checks and route setup only when environment checks fail.
+
+### v1.0.2 Improvements
+
+- Reduced always-on instruction context by replacing setup playbooks in `.github/copilot-instructions.md` and `agents.md` with a lightweight readiness gate.
+- Updated capability and customization maps to include the new environment-readiness workflow.
+- Standardized template release policy as no-tag and aligned release docs/skill guidance with that policy.
+- Simplified release automation by removing git-tag creation support from `release.py`.
+
+## v1.0.1
+
+Released: 2026-04-01
+
 ### Improvements
 
 - Clarified first-time setup guidance for brand-new developers and AI agents.
 - Added explicit AI bootstrap entry points and discovery-friendly task phrases.
 - Strengthened instruction, skill, and agent descriptions with `Use when ...` trigger keywords to improve auto-discovery reliability.
+- Standardized LF line-ending policy and expanded `.gitignore` coverage to reduce cross-platform Git noise.
+- Removed template release-tag guidance and kept template release workflow version-and-changelog only.
 
 ## v1.0.0
 

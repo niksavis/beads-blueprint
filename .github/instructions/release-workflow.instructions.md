@@ -1,6 +1,6 @@
 ---
 applyTo: "release.py,regenerate_changelog.py,changelog.md,version.py,readme.md"
-description: "Use when drafting release notes, regenerating changelog previews, bumping versions with release.py, or preparing release tags."
+description: "Use when drafting release notes, regenerating changelog previews, and bumping versions with release.py in no-tag template release workflows."
 ---
 
 # Release Workflow Instructions
@@ -11,7 +11,7 @@ For release tasks:
   - `python regenerate_changelog.py --preview --json`
 - Keep changelog entries concise and user-focused.
 - Bump versions only through `release.py`.
-- Use optional tagging via `release.py --tag` when requested.
+- Do not create release tags for template workflows.
 
 Checks:
 

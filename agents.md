@@ -11,28 +11,32 @@ auto-load `.github/copilot-instructions.md`.
 - Conditional policy: `.github/instructions/*.instructions.md`
 - Task workflows: `.github/skills/**/SKILL.md`
 
-## Python Prerequisite Guidance
+## Always-On Context Budget
 
-If `python` is unavailable during onboarding:
+- Keep this shim minimal.
+- Do not inline full onboarding/install playbooks here.
+- Use readiness gate + routing so setup workflows load only when needed.
 
-- Install CPython from `python.org` first.
-- On Windows, prefer the full 64-bit installer and enable `Add python.exe to PATH`.
-- Restart VS Code and open a new terminal session after install/PATH changes.
-- Then run: `python scripts/initialize_environment.py --yes-to-all`
+## Environment Readiness Gate
 
-## Initialization Workflow
+Run setup checks only when environment state is unknown or setup is requested.
 
-When asked to initialize the repository, run this sequence:
+Preflight checks:
 
-1. `python scripts/initialize_environment.py --yes-to-all`
-2. `bd --version`
-3. `python validate.py --fast`
-4. `python install_hooks.py --check`
+```bash
+python --version
+bd --version
+dolt version
+python install_hooks.py --check
+```
 
-If Beads is not initialized yet, run:
+Decision:
 
-- `bd init`
-- `bd bootstrap`
+- If checks pass, skip bootstrap and continue requested work.
+- If checks fail, route to:
+  - Skill: `.github/skills/environment-readiness/SKILL.md`
+  - Agent: `.github/agents/development-environment-bootstrap.agent.md`
+  - Prompt: `.github/prompts/initialize-development-environment.prompt.md`
 
 ## Beads + Dolt Sync Model (Critical)
 
@@ -75,30 +79,6 @@ bd backup export-git
   - `bd update <id> --claim --json`
 - Close before commit:
   - `bd close <id> --reason "Done" --json`
-
-## Shell + Terminal Defaults
-
-- Windows default terminal: `Git Bash (.venv)`
-- Linux/macOS default terminal: `bash`
-- PowerShell is fallback only
-
-## Dependency Onboarding
-
-For new Python dependencies:
-
-1. Update `requirements.in` or `requirements-dev.in`
-2. Regenerate corresponding `.txt` lock file with pip-tools
-3. Re-run initialization or install explicitly in `.venv`
-
-Install from lockfiles (`requirements.txt`, `requirements-dev.txt`), not from `.in` files.
-
-For Node/JavaScript dependencies (if this repo adds a Node workspace):
-
-1. Update `package.json` first
-2. Use fixed versions when practical
-3. Commit the corresponding lockfile (`package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock`)
-
-Do not use ad-hoc dependency installs that leave manifests/lockfiles unchanged.
 
 ## Session Completion
 
