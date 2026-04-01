@@ -1,0 +1,28 @@
+# Enforce consistent cross-platform line endings.
+# Store text files with LF in Git and keep LF in working trees.
+* text=auto eol=lf
+
+# Keep shell scripts executable-friendly on Unix-like systems.
+*.sh text eol=lf
+
+# Windows command scripts use CRLF by convention.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Common binary assets (never normalize line endings).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.tgz binary
+*.7z binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
 # Virtual environments
 .venv/
 venv/
@@ -12,22 +17,48 @@ env/
 build/
 dist/
 logs/
+*.log
 
 # Test / coverage
 .pytest_cache/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
+
+# Python tooling caches
+.mypy_cache/
+.pyright/
+.tox/
+.nox/
+.hypothesis/
+.cache/
+pip-wheel-metadata/
 
 # Editor / tooling
 .idea/
 .ruff_cache/
+*.swp
+*.swo
+*~
+.vscode/*.log
+.vscode/*.tmp
 
 # Environment files
 .env
+.env.*
+!.env.example
 
 # Generated scripts and drafts
 beads_commands.ps1
 changelog_draft.json
+
+# JavaScript tooling (optional workspaces)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Installed CLI tools (Beads installation)
 tools/
