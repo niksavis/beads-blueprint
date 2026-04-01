@@ -1,0 +1,31 @@
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = [".beads", ".venv", "tools", "build", "dist", "logs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "PLC"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "basic"
+venvPath = "."
+venv = ".venv"
+exclude = [
+    ".venv",
+    "tools",
+    "build",
+    "dist",
+    "logs",
+    "**/__pycache__",
+    "**/node_modules",
+    "**/.*",
+]
+
+[tool.bandit]
+exclude_dirs = [".venv", "tools", "build", "dist", "tests"]

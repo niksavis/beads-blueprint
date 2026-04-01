@@ -36,11 +36,10 @@ def read_version() -> str:
 
 
 def extract_beads_issue(commit_msg: str) -> str | None:
-    """Extract Beads issue ID from commit message (e.g., 'beads-blueprint-abc')."""
-    # Match both formats: (bd-xxx) and "Closes beads-blueprint-xxx"
+    """Extract Beads issue ID from commit message."""
     patterns = [
-        r"\(bd-([a-z0-9]+)\)",
-        r"Closes\s+beads-blueprint-([a-z0-9]+)",
+        r"\(([a-z0-9][a-z0-9-]*-[a-z0-9]+)\)",
+        r"Closes\s+([a-z0-9][a-z0-9-]*-[a-z0-9]+)",
     ]
     for pattern in patterns:
         if match := re.search(pattern, commit_msg, re.IGNORECASE):
@@ -54,13 +53,12 @@ def get_beads_issue_title(issue_id: str) -> str | None:
     if not issues_file.exists():
         return None
 
-    full_id = f"beads-blueprint-{issue_id}"
     try:
         for line in issues_file.read_text(encoding="utf-8").splitlines():
             if not line.strip():
                 continue
             issue = json.loads(line)
-            if issue.get("id") == full_id:
+            if issue.get("id") == issue_id:
                 return issue.get("title", "")
     except (json.JSONDecodeError, KeyError):
         pass
@@ -89,9 +87,7 @@ def categorize_commit(commit_msg: str) -> tuple[str, str]:
         return (type_map.get(commit_type, "Other"), clean_msg)
 
     # Fallback heuristics
-    if any(
-        word in commit_lower for word in ["add", "implement", "create", "introduce"]
-    ):
+    if any(word in commit_lower for word in ["add", "implement", "create", "introduce"]):
         return ("Features", commit_msg)
     if any(word in commit_lower for word in ["fix", "resolve", "correct", "patch"]):
         return ("Bug Fixes", commit_msg)
@@ -182,8 +178,7 @@ def generate_draft_json(preview: bool = False) -> None:
     beads_issues = {k: v for k, v in grouped.items() if k.startswith("beads:")}
     if beads_issues:
         draft_data["beads_issues"] = {
-            issue_id.replace("beads:", ""): items[0][0]
-            for issue_id, items in beads_issues.items()
+            issue_id.replace("beads:", ""): items[0][0] for issue_id, items in beads_issues.items()
         }
 
     # Write to file
@@ -239,9 +234,7 @@ def ensure_version_section(version_str: str, release_date: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Generate changelog draft or scaffold placeholder"
-    )
+    parser = argparse.ArgumentParser(description="Generate changelog draft or scaffold placeholder")
     parser.add_argument("--version", help="Version without leading v")
     parser.add_argument("--date", help="Release date in YYYY-MM-DD format")
     parser.add_argument(

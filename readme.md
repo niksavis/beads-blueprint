@@ -1,227 +1,233 @@
 # Beads Blueprint Template
 
-Template repository for structured planning and execution using Beads. It provides
-minimal but complete tooling to turn a plan into Beads issues, track work, and
-prepare releases with a changelog and version bump.
+Python-first template repository for teams using Beads as the issue tracker.
 
-**Version:** 0.1.0
+**Version:** 1.0.0
 
-## What This Template Includes
+## What This Template Provides
 
-- README, agents.md, changelog.md, license, gitignore, gitattributes
-- Pre-configured `.beads` folder with proper `.gitignore` (Beads initialization still required)
-- Copilot instructions with Beads workflow guidance
-- PowerShell and bash bootstrap scripts to install/configure Beads from the latest release
-- Plan template and parser that generates Beads JSONL for batch import
-- LLM-assisted changelog generation with JSON export for agent processing
-- Release scripts that bump version and auto-update readme.md
+- Python-only setup and automation scripts (no PowerShell or bash setup scripts)
+- Stack-agnostic application development; Python is reserved for repository automation
+- Beads + Dolt bootstrap with user-level installation and PATH checks
+- Bash-first terminal defaults in VS Code:
+  - Windows: `Git Bash (.venv)`
+  - Linux/macOS: `bash`
+- Development environment initialization in one command
+- Lint/static-analysis toolchain and managed git hooks
+- Copilot customization starter pack:
+  - instructions
+  - agents
+  - skills
+  - prompts
+  - hook templates
+- Lightweight release flow with changelog draft, version bumping, and optional tagging
+- Minimal GitHub Actions workflows for lint and build checks
 
-## Quick Start (Any Shell)
+## Prerequisites
 
-### Setup Python Environment
+- Python 3.13 or newer must be installed before running setup commands.
+- If `python` is not available on Windows, install the full CPython installer from `python.org` (avoid Store-only installs for team consistency).
+- During Windows Python install, enable `Add python.exe to PATH`.
+- After installing Python, restart VS Code and open a new terminal session so PATH updates are applied.
 
-Create a virtual environment and install tooling:
+## First-Time Setup (New Developer or AI Agent)
 
-```powershell
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
+This repository is designed so a brand-new developer or AI agent can bootstrap
+from a fresh clone on a new machine with no prior project knowledge.
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+### Recommended Bootstrap Path (Human or AI)
 
-### Install Beads
-
-**If Beads is already installed elsewhere** (e.g., globally or in `D:\Development\tools\bd`),
-just configure the git merge driver:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\configure_beads.ps1
-```
+Run from repository root:
 
 ```bash
-./scripts/configure_beads.sh
+python scripts/initialize_environment.py --yes-to-all
 ```
 
-**If you need to install Beads locally**, the bootstrap script downloads the latest release
-and extracts `bd` (or `bd.exe` on Windows) directly to `tools/bin/`. This avoids PATH length issues.
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\bootstrap_beads.ps1
-```
+Then verify setup:
 
 ```bash
-./scripts/bootstrap_beads.sh
-```
-
-**After local installation, choose one of these options:**
-
-### Option 1: Add to PATH (recommended for terminal use)
-
-PowerShell (session):
-
-```powershell
-$env:Path += ";$PWD\tools\bin"
 bd --version
+python validate.py --fast
+python install_hooks.py --check
 ```
 
-bash (session):
+If `python` is missing on Windows, install full 64-bit CPython from
+`python.org`, enable `Add python.exe to PATH`, restart VS Code, then rerun.
+
+### AI Agent Entry Points
+
+Use any of these entry points; they route to the same setup workflow:
+
+- Agent: `.github/agents/development-environment-bootstrap.agent.md`
+- Prompt: `.github/prompts/initialize-development-environment.prompt.md`
+- Always-on policy: `.github/copilot-instructions.md` and `agents.md`
+- Capability index: `.github/copilot_capability_map.md`
+
+### Discovery-Friendly Task Phrases
+
+These phrases are intentionally aligned with agent/skill/instruction
+descriptions for stronger auto-discovery:
+
+- "initialize this repo from scratch on a new machine"
+- "bootstrap development environment and verify hooks"
+- "set up Beads and team sync using backup fetch/export"
+- "add dependency, regenerate lockfiles, and install from requirements txt"
+- "run pre-push quality review and validation gates"
+
+## Quick Start
+
+### 1. Initialize Everything
+
+Run from repository root:
 
 ```bash
-export PATH="$PWD/tools/bin:$PATH"
+python scripts/initialize_environment.py --yes-to-all
+```
+
+This command will:
+
+1. Create or refresh `.venv`
+2. Install runtime and dev dependencies
+3. Install or verify Beads and Dolt
+4. Configure VS Code terminal/task settings
+5. Optionally run `bd init`
+6. Install managed git hooks
+7. Run `python validate.py --fast`
+
+### 2. Verify Setup
+
+```bash
 bd --version
+python validate.py --fast
+python install_hooks.py --check
 ```
 
-### Option 2: Configure VS Code (no PATH modification, no admin rights)
-
-Create or edit `.vscode/settings.json` in your workspace:
-
-```json
-{
-  "terminal.integrated.env.windows": {
-    "PATH": "${workspaceFolder}\\tools\\bin;${env:PATH}"
-  },
-  "terminal.integrated.env.linux": {
-    "PATH": "${workspaceFolder}/tools/bin:${env:PATH}"
-  }
-}
-```
-
-This makes `bd` available in all VS Code terminals without modifying system PATH.
-
-### Option 3: Invoke directly
-
-Windows:
-
-```powershell
-tools\bin\bd.exe --version
-```
-
-Linux/macOS:
+Optional tool upgrade (when `bd` and `dolt` already exist):
 
 ```bash
-tools/bin/bd --version
+python scripts/bootstrap_beads.py --update-tools
 ```
 
-**Tools Directory Structure:**
+If Beads or Dolt were installed for the first time and `bd`/`dolt` are still not found, restart VS Code and open a new terminal to reload PATH.
 
-The `tools/bin/` directory contains locally installed CLI tools to avoid PATH length issues.
-You only add `tools/bin` to PATH once, avoiding the ~2000 character limit. To add more
-CLI tools, extract them directly to `tools/bin/` following the same pattern.
-
-**To skip installation with bootstrap** (only configure): Add `-SkipInstall` flag (PowerShell)
-or `--skip-install` argument (bash).
-
-### Initialize Beads
-
-After installing or configuring Beads, initialize the repository:
-
-```powershell
-bd init
-```
+### 3. Team Sync (Shared Repository)
 
 ```bash
-bd init
+git pull --rebase
+bd backup fetch-git
+git branch -f beads-backup origin/beads-backup || true
+bd ready --json
 ```
 
-This creates the necessary files (`issues.jsonl`, etc.) in the `.beads` folder.
+## Beads Workflow
 
-### Create and Execute a Plan
+### Core Lifecycle
 
-1. Create a plan using the template:
+1. Claim before work:
 
-   ```powershell
-   New-Item -ItemType Directory -Force -Path plans
-   Copy-Item templates\plan_template.md plans\my-feature.md
-   ```
+```bash
+bd update <id> --claim --json
+```
 
-2. Edit your plan file with features and tasks
+1. Implement and validate changes
+1. Close bead before commit:
 
-3. Convert plan to Beads JSONL:
+```bash
+bd close <id> --reason "Done" --json
+```
 
-   ```powershell
-   python scripts\plan_to_beads.py --plan plans\my-feature.md --output plan_issues.jsonl
-   ```
+1. Commit with bead id in message
 
-4. Import into Beads:
+## Quality Gates
 
-   ```powershell
-   Get-Content plan_issues.jsonl | Add-Content .beads\issues.jsonl
-   bd sync --import
-   Remove-Item plan_issues.jsonl
-   ```
+Quick gate:
 
-5. Verify issues were created:
+```bash
+python validate.py --fast
+```
 
-   ```powershell
-   bd list
-   ```
+Commit gate:
 
-**Note:** If you haven't added `tools/bin` to PATH, use `tools\bin\bd` for PowerShell
-or `tools/bin/bd` for bash in your commands.
+```bash
+python validate.py --commit
+```
 
-## Plan to Beads Workflow
+Full gate:
 
-The template expects a plan organized by Features, Tasks, and Subtasks. The parser
-generates Beads JSONL format for efficient batch import with automatic parent tracking.
+```bash
+python validate.py --full
+```
 
-Plan format highlights:
+Install hooks:
 
-- `### Feature: <title> [P1]` - Creates a feature with priority (P1-P3)
-- `- Task: <title> [P2]` - Creates a task under the current feature
-- `- Subtask: <title> [P3]` - Creates a subtask under the current task
-- `- Notes: <context>` - Adds notes/context to features or tasks
+```bash
+python install_hooks.py --force
+```
 
-The parser embeds parent references in descriptions for easy tracing.
+## Release Workflow
 
-See [templates/plan_template.md](templates/plan_template.md) for the full format and examples.
+1. Generate changelog draft JSON:
 
-## Release Preparation
+```bash
+python regenerate_changelog.py --preview --json
+```
 
-**Recommended (LLM-assisted changelog):**
+1. Draft release notes (manually or with prompt):
 
-1. Generate changelog draft from unreleased commits:
+- `.github/prompts/release-notes-draft.prompt.md`
 
-   ```powershell
-   python regenerate_changelog.py --preview --json
-   ```
+1. Bump version:
 
-   This creates `changelog_draft.json` with commits since the last tag.
+```bash
+python release.py patch
+python release.py minor
+python release.py major
+```
 
-2. Ask your LLM/Agent to write a polished changelog section by reading the JSON file, then copy the output to `changelog.md` as a new `## vX.Y.Z` section at the top.
+1. Optionally create a git tag during release bump:
 
-3. Bump the version (updates version.py and readme.md):
+```bash
+python release.py patch --tag
+```
 
-   ```powershell
-   python release.py patch    # 0.1.0 → 0.1.1
-   python release.py minor    # 0.1.0 → 0.2.0
-   python release.py major    # 0.1.0 → 1.0.0
-   ```
+## VS Code Defaults
 
-4. Commit and tag:
+Configured in `.vscode/settings.json`:
 
-   ```powershell
-   git add .
-   git commit -m "Release vX.Y.Z"
-   git tag vX.Y.Z
-   git push origin main --tags
-   ```
+- Windows default terminal: `Git Bash (.venv)`
+- Linux/macOS default terminal: `bash`
 
-**Alternative (manual TBD placeholders):**
+## GitHub Actions
 
-Run `python release.py patch` which creates a changelog section with TBD placeholders, then manually edit `changelog.md` to replace them before committing.
+- `.github/workflows/lint.yml`:
+  - dependency install
+  - `python validate.py --fast`
+- `.github/workflows/build.yml`:
+  - smoke build checks
+  - changelog draft generation
+  - optional tests if `tests/` exists
 
 ## Repository Layout
 
-- [agents.md](agents.md) - agent workflow and Beads rules
-- [.github/copilot-instructions.md](.github/copilot-instructions.md) - Copilot guidance
-- [scripts/](scripts/) - bootstrap and plan tooling
-- [templates/](templates/) - plan templates
+- `scripts/` - Python-only automation scripts
+- `.github/instructions/` - conditional coding and workflow instructions
+- `.github/skills/` - reusable workflows
+- `.github/agents/` - specialized subagents
+- `.github/prompts/` - reusable prompt templates
+- `.github/hooks/` - hook configuration packs
+
+## Dependency Management Policy
+
+- Python dependencies:
+  - Add runtime packages to `requirements.in`.
+  - Add dev-only packages to `requirements-dev.in`.
+  - Regenerate pinned lock files (`requirements.txt`, `requirements-dev.txt`) with `pip-compile`.
+  - Install only from lock files (`requirements.txt`, `requirements-dev.txt`), never from `.in` files.
+- Node/JavaScript dependencies (if a Node workspace is added later):
+  - Add packages to `package.json` with fixed versions when possible.
+  - Commit the corresponding lock file (`package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock`).
+- Avoid ad-hoc dependency installs that are not reflected in package/lock files.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See `LICENSE`.

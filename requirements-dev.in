@@ -1,0 +1,8 @@
+-r requirements.txt
+pip-tools
+ruff
+pyright
+pytest
+bandit
+pip-audit
+pre-commit

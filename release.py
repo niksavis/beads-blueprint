@@ -11,8 +11,11 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 from datetime import date
 from pathlib import Path
+
+from regenerate_changelog import ensure_version_section
 
 PROJECT_ROOT = Path(__file__).parent
 VERSION_FILE = PROJECT_ROOT / "version.py"
@@ -61,9 +64,23 @@ def update_readme(version_str: str) -> None:
 
 
 def update_changelog(version_str: str) -> None:
-    from regenerate_changelog import ensure_version_section
-
     ensure_version_section(version_str, date.today().isoformat())
+
+
+def create_git_tag(version_str: str) -> None:
+    tag = f"v{version_str}"
+    exists = subprocess.run(
+        ["git", "rev-parse", "--verify", tag],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if exists.returncode == 0:
+        print(f"Tag already exists: {tag}")
+        return
+
+    subprocess.run(["git", "tag", tag], check=True)
+    print(f"Created tag: {tag}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -73,6 +90,11 @@ def parse_args() -> argparse.Namespace:
         "--skip-changelog",
         action="store_true",
         help="Do not modify changelog.md",
+    )
+    parser.add_argument(
+        "--tag",
+        action="store_true",
+        help="Create a git tag (vX.Y.Z) after version update",
     )
     return parser.parse_args()
 
@@ -85,6 +107,8 @@ def main() -> int:
     update_readme(version_str)
     if not args.skip_changelog:
         update_changelog(version_str)
+    if args.tag:
+        create_git_tag(version_str)
     print(f"Updated version to {version_str}")
     return 0
 

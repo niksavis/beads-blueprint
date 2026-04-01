@@ -1,0 +1,32 @@
+{
+  "python.terminal.activateEnvironment": false,
+  "terminal.integrated.defaultProfile.windows": "Git Bash (.venv)",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.defaultProfile.osx": "bash",
+  "terminal.integrated.profiles.windows": {
+    "Git Bash (.venv)": {
+      "source": "Git Bash",
+      "args": ["--init-file", ".vscode/git-bash-init.sh"],
+      "icon": "terminal-bash"
+    },
+    "Git Bash": {
+      "source": "Git Bash",
+      "icon": "terminal-bash"
+    },
+    "PowerShell (.venv)": {
+      "source": "PowerShell",
+      "args": ["-NoExit", "-Command", "& '.venv\\Scripts\\Activate.ps1'"]
+    },
+    "PowerShell": {
+      "source": "PowerShell"
+    }
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "always",
+      "source.organizeImports.ruff": "always"
+    }
+  }
+}

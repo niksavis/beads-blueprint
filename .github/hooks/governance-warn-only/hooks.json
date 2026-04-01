@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "echo '[governance] session started: apply repo instructions, keep changes minimal, and enforce layered architecture.'",
+        "timeout": 5
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "echo '[governance] reminder: zero diagnostics, no customer data, no emoji in code/logging/comments.'",
+        "timeout": 5
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "echo '[governance] session end: verify get_errors clean and summarize validation performed.'",
+        "timeout": 5
+      }
+    ]
+  }
+}
