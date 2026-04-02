@@ -18,19 +18,13 @@ import os
 import platform
 import shutil
 import stat
+import sys
 import tarfile
 import tempfile
 import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
-
-if platform.system() == "Windows":
-    import ctypes
-    import winreg
-else:
-    ctypes = None
-    winreg = None
 
 BEADS_GITHUB_API = "https://api.github.com/repos/gastownhall/beads/releases"
 DOLT_GITHUB_API = "https://api.github.com/repos/dolthub/dolt/releases"
@@ -216,8 +210,11 @@ def _normalize_win_path(value: str) -> str:
 
 
 def ensure_windows_user_path(entries: list[Path]) -> list[Path]:
-    if winreg is None or ctypes is None:
+    if sys.platform != "win32":
         return []
+
+    import ctypes  # noqa: PLC0415
+    import winreg  # noqa: PLC0415
 
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_READ) as key:
         try:
