@@ -22,6 +22,11 @@ by a local Dolt database and synchronized through Git backups.
 - `bd --version` succeeds.
 - `bd context` shows `backend=dolt`.
 - Repository has run `bd bootstrap` at least once.
+- On Windows, expected tool locations are:
+  - `C:\Users\<user>\AppData\Local\Programs\bd\bd.exe`
+  - `C:\Users\<user>\AppData\Local\Programs\dolt\dolt.exe`
+- If upgrading manually on Windows, download release zip assets and extract
+  `bd.exe` / `dolt.exe` into the same directories.
 
 Quick verification:
 

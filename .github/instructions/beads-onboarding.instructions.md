@@ -52,6 +52,19 @@ Required user PATH entries:
 - `C:\Users\<user>\AppData\Local\Programs\bd`
 - `C:\Users\<user>\AppData\Local\Programs\dolt`
 
+Manual update workflow (Windows):
+
+1. Download the latest release assets from the links above.
+2. Use Windows zip assets and extract `bd.exe` / `dolt.exe` into:
+
+- `C:\Users\<user>\AppData\Local\Programs\bd`
+- `C:\Users\<user>\AppData\Local\Programs\dolt`
+
+3. Verify tool versions:
+
+- `bd --version`
+- `dolt version`
+
 If tools are already installed, setup should offer optional updates.
 
 ## Fresh Clone Setup

@@ -30,6 +30,21 @@ Optional quick quality probe after preflight:
 python validate.py --fast
 ```
 
+## Windows Tool Paths (Beads + Dolt)
+
+On Windows, expected install targets are:
+
+- `C:\Users\<user>\AppData\Local\Programs\bd\bd.exe`
+- `C:\Users\<user>\AppData\Local\Programs\dolt\dolt.exe`
+
+Expected user PATH entries are:
+
+- `C:\Users\<user>\AppData\Local\Programs\bd`
+- `C:\Users\<user>\AppData\Local\Programs\dolt`
+
+When updating tooling manually, use release assets and extract binaries directly
+to those folders (Windows assets are zip files).
+
 ## Decision Gate
 
 - All checks pass:
