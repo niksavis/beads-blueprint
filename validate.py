@@ -94,7 +94,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
-    if not PYTHON.exists():
+    if not PYTHON.exists() and not shutil.which("ruff"):
         print(f"[validate] ERROR: missing virtual environment: {PYTHON}")
         print("[validate] Run: python scripts/initialize_environment.py")
         return 1
