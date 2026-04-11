@@ -102,7 +102,13 @@ pip install beads-mcp
 pipx install beads-mcp
 ```
 
-2. Add project-level config file `.vscode/mcp.json`:
+2. Configure user-level VS Code MCP for all projects:
+
+- macOS: `~/Library/Application Support/Code/User/mcp.json`
+- Linux: `~/.config/Code/User/mcp.json`
+- Windows: `%APPDATA%\\Code\\User\\mcp.json`
+
+Merge Beads MCP server into the existing JSON object:
 
 ```json
 {
@@ -114,13 +120,9 @@ pipx install beads-mcp
 }
 ```
 
-3. Optional: configure user-level VS Code MCP for all projects:
+Do not remove unrelated existing MCP servers in `mcp.json`.
 
-- macOS: `~/Library/Application Support/Code/User/mcp.json`
-- Linux: `~/.config/Code/User/mcp.json`
-- Windows: `%APPDATA%\\Code\\User\\mcp.json`
-
-4. Reload VS Code and verify Beads health:
+3. Reload VS Code and verify Beads health:
 
 ```bash
 bd version
