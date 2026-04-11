@@ -106,6 +106,8 @@ Rules:
 - Optional tightening: verify Beads config contains `issue-prefix`, `issue_prefix`, or `id.prefix`, and the value matches repository folder slug.
 - Do not edit always-on policy files (`.github/copilot-instructions.md`, `agents.md`) during setup.
 - End with exact next command I should run.
+- If a VS Code window for this repository is open, trigger `workbench.action.reloadWindow` after successful verification.
+- After successful verification, last sentence must be: If VS Code did not reload automatically, restart VS Code now so extensions and tooling load correctly.
 ```
 
 ## Manual Fallback (No AI)

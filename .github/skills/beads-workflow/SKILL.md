@@ -16,6 +16,7 @@ This template intentionally uses Git-backed Beads backups for team state sync:
 
 - Session restore: `bd backup fetch-git`
 - Session publish: `bd backup export-git`
+- Code branch pushes/merges do not sync Beads state by themselves.
 - Do not use `dolt pull` or `dolt push` in this template workflow.
 - Do not use `bd import` or `bd export` for team sync in this template.
 

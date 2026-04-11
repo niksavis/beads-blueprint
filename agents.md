@@ -50,6 +50,7 @@ Beads uses a local Dolt database in this repository.
 - Do not use `bd import` or `bd export` for team sync (migration/snapshot only).
 - Do not configure Dolt remotes for this template workflow.
 - Team sync is Git-based via `bd backup fetch-git` and `bd backup export-git`.
+- Code branch pushes/merges do not sync Beads state by themselves.
 
 Session start:
 

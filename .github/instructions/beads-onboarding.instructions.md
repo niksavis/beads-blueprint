@@ -28,6 +28,7 @@ This template intentionally uses Git-backed backup flow for team sync.
 - Do not use `dolt pull` or `dolt push` for issue sharing.
 - Do not use `bd import` or `bd export` for team sync (migration/snapshot only).
 - Do not configure Dolt remotes for normal team workflow.
+- Code branch pushes/merges do not sync Beads state by themselves.
 - Share Beads state with:
   - `bd backup fetch-git` (restore latest team snapshot)
   - `bd backup export-git` (publish local snapshot)

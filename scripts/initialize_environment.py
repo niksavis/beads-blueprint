@@ -31,6 +31,14 @@ def run(command: list[str], cwd: Path, check: bool = True) -> int:
     return result.returncode
 
 
+def _as_text(output: bytes | str | None) -> str:
+    if output is None:
+        return ""
+    if isinstance(output, bytes):
+        return output.decode("utf-8", errors="replace")
+    return output
+
+
 def _format_version(version: tuple[int, ...]) -> str:
     return ".".join(str(part) for part in version)
 
@@ -68,7 +76,7 @@ def python_version(python_bin: str | Path, cwd: Path) -> tuple[int, int, int]:
             [str(python_bin), "-c", code],
             cwd=cwd,
             capture_output=True,
-            text=True,
+            text=False,
             check=False,
         )
     except FileNotFoundError as exc:
@@ -77,7 +85,8 @@ def python_version(python_bin: str | Path, cwd: Path) -> tuple[int, int, int]:
     if result.returncode != 0:
         raise RuntimeError(f"Unable to determine Python version for interpreter: {python_bin}")
 
-    return _parse_version_triplet(result.stdout.strip(), label="Python")
+    output = _as_text(result.stdout).strip()
+    return _parse_version_triplet(output, label="Python")
 
 
 def ensure_min_python_version(python_bin: str | Path, repo_root: Path) -> None:
@@ -102,7 +111,7 @@ def _probe_python_command(
             [*command, "-c", probe_code],
             cwd=repo_root,
             capture_output=True,
-            text=True,
+            text=False,
             check=False,
         )
     except FileNotFoundError:
@@ -111,7 +120,8 @@ def _probe_python_command(
     if result.returncode != 0:
         return None
 
-    lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    output = _as_text(result.stdout)
+    lines = [line.strip() for line in output.splitlines() if line.strip()]
     if len(lines) < 2:
         return None
 
@@ -320,7 +330,7 @@ def node_version(node_bin: str | Path, cwd: Path) -> tuple[int, int, int]:
             [str(node_bin), "--version"],
             cwd=cwd,
             capture_output=True,
-            text=True,
+            text=False,
             check=False,
         )
     except FileNotFoundError as exc:
@@ -329,7 +339,7 @@ def node_version(node_bin: str | Path, cwd: Path) -> tuple[int, int, int]:
     if result.returncode != 0:
         raise RuntimeError(f"Unable to determine Node version for executable: {node_bin}")
 
-    output = result.stdout.strip() or result.stderr.strip()
+    output = _as_text(result.stdout).strip() or _as_text(result.stderr).strip()
     return _parse_version_triplet(output, label="Node")
 
 
@@ -505,15 +515,90 @@ def locate_bd(repo_root: Path) -> str | None:
     return in_path
 
 
+def locate_vscode_cli() -> str | None:
+    for candidate in ("code", "code-insiders"):
+        resolved = shutil.which(candidate)
+        if resolved:
+            return resolved
+    return None
+
+
+def _normalize_for_match(value: str) -> str:
+    return value.replace("\\", "/").casefold()
+
+
+def _is_repo_window_open_in_vscode(code_bin: str, repo_root: Path) -> bool:
+    result = subprocess.run(
+        [code_bin, "--status"],
+        cwd=repo_root,
+        capture_output=True,
+        text=False,
+        check=False,
+    )
+    if result.returncode != 0:
+        return False
+
+    stdout = _as_text(result.stdout)
+    stderr = _as_text(result.stderr)
+    status_text = "\n".join(part for part in (stdout, stderr) if part)
+
+    normalized_status = _normalize_for_match(status_text)
+    repo_path = _normalize_for_match(str(repo_root.resolve()))
+    repo_name = repo_root.name.casefold()
+
+    if repo_path and repo_path in normalized_status:
+        return True
+
+    return f"({repo_name} - visual studio code)" in normalized_status
+
+
+def maybe_reload_vscode_window(repo_root: Path) -> None:
+    code_bin = locate_vscode_cli()
+    if not code_bin:
+        print("Skipping VS Code reload: VS Code CLI is not available in PATH.")
+        return
+
+    if not _is_repo_window_open_in_vscode(code_bin, repo_root):
+        print("Skipping VS Code reload: no open VS Code window found for this repository.")
+        return
+
+    reload_command = [
+        code_bin,
+        "--folder-uri",
+        repo_root.resolve().as_uri(),
+        "--reuse-window",
+        "--command",
+        "workbench.action.reloadWindow",
+    ]
+    result = subprocess.run(
+        reload_command,
+        cwd=repo_root,
+        capture_output=True,
+        text=False,
+        check=False,
+    )
+    if result.returncode == 0:
+        print("Triggered VS Code window reload for this repository.")
+        return
+
+    stderr = _as_text(result.stderr).strip()
+    if stderr:
+        print(f"VS Code reload request failed: {stderr}")
+    else:
+        print("VS Code reload request failed.")
+
+
 def _bd_init_help_text(bd_bin: str, repo_root: Path) -> str:
     result = subprocess.run(
         [bd_bin, "init", "--help"],
         cwd=repo_root,
         capture_output=True,
-        text=True,
+        text=False,
         check=False,
     )
-    return "\n".join(part for part in (result.stdout, result.stderr) if part)
+    stdout = _as_text(result.stdout)
+    stderr = _as_text(result.stderr)
+    return "\n".join(part for part in (stdout, stderr) if part)
 
 
 def _build_bd_init_commands(bd_bin: str, help_text: str) -> list[list[str]]:
@@ -546,14 +631,16 @@ def _run_bd_init_with_fallback(commands: list[list[str]], repo_root: Path) -> No
             command,
             cwd=repo_root,
             capture_output=True,
-            text=True,
+            text=False,
             check=False,
         )
         if result.returncode == 0:
             return
 
+        stdout = _as_text(result.stdout)
+        stderr = _as_text(result.stderr)
         output = "\n".join(
-            part.strip() for part in (result.stdout, result.stderr) if part and part.strip()
+            part.strip() for part in (stdout, stderr) if part and part.strip()
         )
         if not output:
             output = "(no output)"
@@ -572,7 +659,7 @@ def _is_beads_initialized(repo_root: Path) -> bool:
         [bd_bin, "info", "--json"],
         cwd=repo_root,
         capture_output=True,
-        text=True,
+        text=False,
         check=False,
     )
     return result.returncode == 0
@@ -645,10 +732,10 @@ def _is_git_repository(repo_root: Path) -> bool:
         ["git", "rev-parse", "--is-inside-work-tree"],
         cwd=repo_root,
         capture_output=True,
-        text=True,
+        text=False,
         check=False,
     )
-    return result.returncode == 0 and result.stdout.strip() == "true"
+    return result.returncode == 0 and _as_text(result.stdout).strip() == "true"
 
 
 def report_setup_artifact_changes(repo_root: Path) -> None:
@@ -659,13 +746,14 @@ def report_setup_artifact_changes(repo_root: Path) -> None:
         ["git", "status", "--short", "--", ".gitignore", ".beads/hooks"],
         cwd=repo_root,
         capture_output=True,
-        text=True,
+        text=False,
         check=False,
     )
     if result.returncode != 0:
         return
 
-    changes = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    output = _as_text(result.stdout)
+    changes = [line.strip() for line in output.splitlines() if line.strip()]
     if not changes:
         return
 
@@ -795,8 +883,13 @@ def main() -> int:
 
     report_setup_artifact_changes(repo_root)
     print_post_init_workflow_hint(repo_root)
+    maybe_reload_vscode_window(repo_root)
 
     print("Environment initialization complete.")
+    print(
+        "If VS Code did not reload automatically, restart VS Code now so "
+        "extensions and tooling load correctly."
+    )
     return 0
 
 

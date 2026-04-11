@@ -56,6 +56,7 @@ Core setup remains Python-first. Shell wrapper scripts are allowed for one-line 
 - Do not use `bd import` or `bd export` for team sync (migration/snapshot only).
 - Do not require or configure Dolt remotes for normal team sync.
 - Team sync uses only `bd backup fetch-git` and `bd backup export-git`.
+- Code branch pushes/merges do not sync Beads state by themselves.
 - Start session sync sequence:
   1. `git pull --rebase`
   2. `bd backup fetch-git`

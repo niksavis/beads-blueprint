@@ -178,6 +178,40 @@ def test_report_setup_artifact_changes_noop_when_clean(
     assert output == ""
 
 
+def test_report_setup_artifact_changes_handles_non_utf8_output(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_initialize_environment_module()
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, check
+        if command[:3] == ["git", "rev-parse", "--is-inside-work-tree"]:
+            return SimpleNamespace(returncode=0, stdout=b"true\n", stderr=b"")
+        if command[:3] == ["git", "status", "--short"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout=b" M .gitignore\n?? .beads/hooks/pre-push\x8f\n",
+                stderr=b"",
+            )
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.report_setup_artifact_changes(Path("."))
+
+    output = capsys.readouterr().out
+    assert "Bootstrap changed tracked setup artifacts:" in output
+
+
 def test_print_post_init_workflow_hint_when_beads_exists(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -207,6 +241,92 @@ def test_print_post_init_workflow_hint_noop_without_beads(
 
     output = capsys.readouterr().out
     assert output == ""
+
+
+def test_maybe_reload_vscode_window_skips_without_cli(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_initialize_environment_module()
+    monkeypatch.setattr(module, "locate_vscode_cli", lambda: None)
+
+    module.maybe_reload_vscode_window(Path("/tmp/my-project"))
+
+    output = capsys.readouterr().out
+    assert "Skipping VS Code reload: VS Code CLI is not available in PATH." in output
+
+
+def test_maybe_reload_vscode_window_skips_when_repo_window_not_open(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_initialize_environment_module()
+    monkeypatch.setattr(module, "locate_vscode_cli", lambda: "code")
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, check
+        if command == ["code", "--status"]:
+            return SimpleNamespace(
+                returncode=0, stdout=b"window [1] (Welcome - Visual Studio Code)", stderr=b""
+            )
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.maybe_reload_vscode_window(Path("/tmp/my-project"))
+
+    output = capsys.readouterr().out
+    assert "no open VS Code window found for this repository" in output
+
+
+def test_maybe_reload_vscode_window_triggers_reload_for_repo_window(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_initialize_environment_module()
+    monkeypatch.setattr(module, "locate_vscode_cli", lambda: "code")
+
+    calls: list[list[str]] = []
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, check
+        calls.append(command)
+        if command == ["code", "--status"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout=b"window [33] (my-project - Visual Studio Code)",
+                stderr=b"",
+            )
+        if len(command) >= 6 and command[:2] == ["code", "--folder-uri"]:
+            return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.maybe_reload_vscode_window(Path("/tmp/my-project"))
+
+    assert calls[0] == ["code", "--status"]
+    assert calls[1][0:2] == ["code", "--folder-uri"]
+    assert "--command" in calls[1]
+    assert "workbench.action.reloadWindow" in calls[1]
+    output = capsys.readouterr().out
+    assert "Triggered VS Code window reload for this repository." in output
 
 
 def test_is_beads_initialized_uses_bd_info(
