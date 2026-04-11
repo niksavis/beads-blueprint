@@ -47,6 +47,7 @@ Beads uses a local Dolt database in this repository.
 
 - There is no Dolt remote server for team sync.
 - Do not use `dolt pull` or `dolt push` for issue sharing.
+- Do not use `bd import` or `bd export` for team sync (migration/snapshot only).
 - Do not configure Dolt remotes for this template workflow.
 - Team sync is Git-based via `bd backup fetch-git` and `bd backup export-git`.
 
@@ -58,6 +59,11 @@ bd backup fetch-git
 git branch -f beads-backup origin/beads-backup || true
 bd ready --json
 ```
+
+For every new session after Beads is initialized (`bd info --json` succeeds),
+run the session kickoff prompt before implementation work:
+
+`.github/prompts/start-work-session.prompt.md`
 
 Session end:
 
@@ -80,8 +86,10 @@ bd backup export-git
 - Never use `bd edit` in agent workflows.
 - Claim before work:
   - `bd update <id> --claim --json`
+- If no actionable bead exists, create one with `--description`, then publish and claim it.
 - Close before commit:
   - `bd close <id> --reason "Done" --json`
+- Commit messages must include exact bead id trailer, for example `(my-project-123)`.
 
 ## Session Completion
 

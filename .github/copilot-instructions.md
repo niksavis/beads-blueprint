@@ -35,6 +35,7 @@ This is the canonical always-on policy for this template repository.
 
 For day-to-day development after setup:
 
+- Mandatory for every new session when Beads is initialized in this repo (`bd info --json` succeeds): run `.github/prompts/start-work-session.prompt.md` before implementation.
 - Session kickoff prompt: `.github/prompts/start-work-session.prompt.md`
 - Greenfield kickoff prompt: `.github/prompts/greenfield-project-kickoff.prompt.md`
 
@@ -52,7 +53,9 @@ Core setup remains Python-first. Shell wrapper scripts are allowed for one-line 
 - Never use `bd edit` in automated workflows
 - Beads uses a local Dolt database; team sync is Git-based through backup commands.
 - Do not use `dolt pull` or `dolt push` in this repository.
+- Do not use `bd import` or `bd export` for team sync (migration/snapshot only).
 - Do not require or configure Dolt remotes for normal team sync.
+- Team sync uses only `bd backup fetch-git` and `bd backup export-git`.
 - Start session sync sequence:
   1. `git pull --rebase`
   2. `bd backup fetch-git`
@@ -60,10 +63,11 @@ Core setup remains Python-first. Shell wrapper scripts are allowed for one-line 
 - Required lifecycle order:
   1. Claim: `bd update <id> --claim --json`
   2. Publish claim/state changes for teammates: `bd backup export-git`
-  3. Implement + validate
-  4. Close: `bd close <id> --reason "Done" --json`
-  5. Commit with bead id in message
-  6. Push code (`git push`)
+  3. If no actionable bead exists, create one with `bd create ... --description ... --json`, then publish and claim it.
+  4. Implement + validate
+  5. Close: `bd close <id> --reason "Done" --json`
+  6. Commit with exact bead id in message trailer, for example `(my-project-123)`
+  7. Push code (`git push`)
 
 ## Quality Gate Rules
 

@@ -176,3 +176,86 @@ def test_report_setup_artifact_changes_noop_when_clean(
 
     output = capsys.readouterr().out
     assert output == ""
+
+
+def test_print_post_init_workflow_hint_when_beads_exists(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_initialize_environment_module()
+    monkeypatch.setattr(module, "_is_beads_initialized", lambda _repo_root: True)
+
+    module.print_post_init_workflow_hint(tmp_path)
+
+    output = capsys.readouterr().out
+    assert ".github/prompts/start-work-session.prompt.md" in output
+    assert 'bd create "Describe task" --description' in output
+    assert "bd update <id> --claim --json" in output
+    assert "3-7 step implementation plan" in output
+
+
+def test_print_post_init_workflow_hint_noop_without_beads(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_initialize_environment_module()
+    monkeypatch.setattr(module, "_is_beads_initialized", lambda _repo_root: False)
+
+    module.print_post_init_workflow_hint(tmp_path)
+
+    output = capsys.readouterr().out
+    assert output == ""
+
+
+def test_is_beads_initialized_uses_bd_info(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_initialize_environment_module()
+
+    monkeypatch.setattr(module, "locate_bd", lambda _repo_root: "bd")
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, check
+        if command == ["bd", "info", "--json"]:
+            return SimpleNamespace(returncode=0, stdout="{}", stderr="")
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    assert module._is_beads_initialized(Path(".")) is True
+
+
+def test_is_beads_initialized_returns_false_on_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_initialize_environment_module()
+
+    monkeypatch.setattr(module, "locate_bd", lambda _repo_root: "bd")
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, check
+        if command == ["bd", "info", "--json"]:
+            return SimpleNamespace(returncode=1, stdout="", stderr="no db")
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    assert module._is_beads_initialized(Path(".")) is False

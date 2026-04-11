@@ -562,8 +562,23 @@ def _run_bd_init_with_fallback(commands: list[list[str]], repo_root: Path) -> No
     raise RuntimeError(f"All Beads init commands failed:\n\n{details}")
 
 
+def _is_beads_initialized(repo_root: Path) -> bool:
+    bd_bin = locate_bd(repo_root)
+    if not bd_bin:
+        return False
+
+    result = subprocess.run(
+        [bd_bin, "info", "--json"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.returncode == 0
+
+
 def maybe_init_beads(repo_root: Path) -> None:
-    if (repo_root / ".beads").exists():
+    if _is_beads_initialized(repo_root):
         return
 
     bd_bin = locate_bd(repo_root)
@@ -614,6 +629,20 @@ def report_setup_artifact_changes(repo_root: Path) -> None:
     print("Commit setup artifacts in one commit:")
     print("  git add .gitignore .beads/hooks")
     print('  git commit -m "chore(setup): record beads bootstrap artifacts (bd-setup)"')
+
+
+def print_post_init_workflow_hint(repo_root: Path) -> None:
+    if not _is_beads_initialized(repo_root):
+        return
+
+    print("Next required step before implementation:")
+    print("  Use prompt: .github/prompts/start-work-session.prompt.md")
+    print("If no bead is ready, create one with full description and claim it:")
+    print('  bd create "Describe task" --description "Goal + criteria" -t task -p 2 --json')
+    print("  bd backup export-git")
+    print("  bd update <id> --claim --json")
+    print("  bd backup export-git")
+    print("Then draft a 3-7 step implementation plan before coding.")
 
 
 def parse_args() -> argparse.Namespace:
@@ -717,6 +746,7 @@ def main() -> int:
         run([str(interpreter), "validate.py", "--fast"], cwd=repo_root)
 
     report_setup_artifact_changes(repo_root)
+    print_post_init_workflow_hint(repo_root)
 
     print("Environment initialization complete.")
     return 0

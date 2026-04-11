@@ -71,11 +71,18 @@ def _ensure_managed_hooks_path(check_only: bool) -> bool:
 
 
 def _refresh_beads_hooks() -> None:
-    if not (ROOT / ".beads").exists():
-        return
-
     bd_bin = shutil.which("bd")
     if not bd_bin:
+        return
+
+    initialized = subprocess.run(
+        [bd_bin, "info", "--json"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if initialized.returncode != 0:
         return
 
     result = subprocess.run([bd_bin, "hooks", "install"], cwd=ROOT, check=False)
@@ -212,23 +219,110 @@ run_beads_hook_file() {
     sh "$BEADS_HOOK" "$@"
 }
 
+beads_initialized() {
+    if ! command -v bd >/dev/null 2>&1; then
+        return 1
+    fi
+
+    bd info --json >/dev/null 2>&1
+}
+
+resolve_issue_prefix() {
+    if ! command -v bd >/dev/null 2>&1; then
+        return 1
+    fi
+
+    prefix=$(bd config get --json issue_prefix 2>/dev/null \
+        | sed -nE 's/.*"value"[[:space:]]*:[[:space:]]*"([^"]+)".*/\\1/p' \
+        | head -n1)
+    if [ -n "$prefix" ]; then
+        printf '%s\n' "$prefix"
+        return 0
+    fi
+
+    prefix=$(bd config get --json id.prefix 2>/dev/null \
+        | sed -nE 's/.*"value"[[:space:]]*:[[:space:]]*"([^"]+)".*/\\1/p' \
+        | head -n1)
+    if [ -n "$prefix" ]; then
+        printf '%s\n' "$prefix"
+        return 0
+    fi
+
+    prefix=$(bd config list 2>/dev/null \
+        | sed -nE 's/^[[:space:]]*issue_prefix[[:space:]]*=[[:space:]]*//p' \
+        | head -n1)
+    if [ -n "$prefix" ]; then
+        printf '%s\n' "$prefix"
+        return 0
+    fi
+
+    prefix=$(bd config list 2>/dev/null \
+        | sed -nE 's/^[[:space:]]*id\\.prefix[[:space:]]*=[[:space:]]*//p' \
+        | head -n1)
+    if [ -n "$prefix" ]; then
+        printf '%s\n' "$prefix"
+        return 0
+    fi
+
+    return 1
+}
+
 GUARD_EXIT=0
 BEADS_EXIT=0
 
 COMMIT_MSG_FILE="$1"
-if [ -d ".beads" ]; then
+if beads_initialized; then
     FIRST_LINE=$(grep -v '^#' "$COMMIT_MSG_FILE" | grep -v '^[[:space:]]*$' | head -n1)
+    ISSUE_PREFIX=$(resolve_issue_prefix || true)
+    TRAILER=$(echo "$FIRST_LINE" | sed -nE 's/.*\\(([a-z0-9][a-z0-9._-]*)\\)$/\\1/p')
+    GUARD_REASON=""
 
     case "$FIRST_LINE" in
         "Merge "*|"Revert "*|"fixup! "*|"squash! "*|"chore(release):"*)
             GUARD_EXIT=0 ;;
         *)
-            if echo "$FIRST_LINE" | grep -qE '\\([a-z0-9][a-z0-9-]*-[a-z0-9]+\\)'; then
-                GUARD_EXIT=0
-            else
-                echo "[git-hook] commit-msg: expected '(bd-123)' or '(project-abc)'" >&2
-                echo "[git-hook] Example: feat(core): add bootstrap flow (bd-123)" >&2
+            if [ -z "$TRAILER" ]; then
                 GUARD_EXIT=1
+                GUARD_REASON="missing"
+            elif [ -z "$ISSUE_PREFIX" ]; then
+                GUARD_EXIT=1
+                GUARD_REASON="prefix"
+            else
+                SUFFIX=""
+                case "$TRAILER" in
+                    "$ISSUE_PREFIX"-*)
+                        SUFFIX=${TRAILER#"$ISSUE_PREFIX"-}
+                        ;;
+                esac
+
+                if [ -z "$SUFFIX" ] || ! echo "$SUFFIX" | grep -qE '^[a-z0-9][a-z0-9._-]*$'; then
+                    GUARD_EXIT=1
+                    GUARD_REASON="format"
+                elif ! bd show "$TRAILER" --json >/dev/null 2>&1; then
+                    GUARD_EXIT=1
+                    GUARD_REASON="unknown"
+                else
+                    GUARD_EXIT=0
+                fi
+            fi
+
+            if [ $GUARD_EXIT -ne 0 ]; then
+                echo "[git-hook] commit-msg: expected exact Beads trailer" >&2
+                echo "[git-hook] '(${ISSUE_PREFIX}-...)' at end of subject" >&2
+                echo "[git-hook] Example: feat(core): add flow (${ISSUE_PREFIX}-123)" >&2
+                case "$GUARD_REASON" in
+                    "missing")
+                        echo "[git-hook] Missing Beads trailer at end of commit subject." >&2 ;;
+                    "prefix")
+                        echo "[git-hook] Unable to resolve issue prefix." >&2
+                        echo "[git-hook] Run: bd config list" >&2 ;;
+                    "format")
+                        echo "[git-hook] Trailer must start with '${ISSUE_PREFIX}-'" >&2
+                        echo "[git-hook] and use Beads ID characters." >&2 ;;
+                    "unknown")
+                        echo "[git-hook] Trailer '${TRAILER}' does not resolve" >&2
+                        echo "[git-hook] to an existing Beads issue." >&2 ;;
+                esac
             fi
             ;;
     esac

@@ -31,16 +31,31 @@ Steps:
    python install_hooks.py --check
    ```
 
-4. Ask the developer which bead to claim, then claim it:
+4. If no actionable bead is ready, create one before implementation:
+
+   ```bash
+   bd create "Short task title" --description "Context and acceptance criteria" -t task -p 2 --json
+   bd backup export-git
+   ```
+
+5. Ask the developer which bead to claim (existing or new), then claim and publish it:
 
    ```bash
    bd update <id> --claim --json
    bd backup export-git
    ```
 
+6. Draft a concise implementation plan (3-7 steps) before coding and attach it to the bead:
+
+   ```bash
+   bd note <id> "Implementation plan: 1) ... 2) ... 3) ..."
+   ```
+
 Rules:
 
 - Do not start any implementation until a bead is claimed and published.
+- If `bd ready --json` returns no actionable beads, create one with `--description`.
+- Commit messages must use the exact bead identifier trailer, for example `(my-project-123)`.
 - If `python validate.py --fast` fails, stop and report what is broken before proceeding.
 - If `npm` is not found, install Node.js 20+, run `npm ci`, then rerun readiness checks.
 - If `bd` or `dolt` are not found, route to `.github/agents/development-environment-bootstrap.agent.md`.

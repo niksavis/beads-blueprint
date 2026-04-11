@@ -20,8 +20,13 @@ For always-on compatibility files (`.github/copilot-instructions.md`, `agents.md
 
 ## Critical Model
 
+Upstream docs describe `bd dolt pull` / `bd dolt push` and Dolt-backed sync as
+the default model.
+This template intentionally uses Git-backed backup flow for team sync.
+
 - There is no Dolt remote server for team sync.
 - Do not use `dolt pull` or `dolt push` for issue sharing.
+- Do not use `bd import` or `bd export` for team sync (migration/snapshot only).
 - Do not configure Dolt remotes for normal team workflow.
 - Share Beads state with:
   - `bd backup fetch-git` (restore latest team snapshot)
@@ -77,6 +82,18 @@ bd backup fetch-git
 bd status
 ```
 
+If `.beads/config.toml` exists (newer Beads docs), keep it tracked.
+If `.beads/config.yaml` exists (older/newer compatibility behavior), keep it tracked.
+
+Validate active issue prefix before work:
+
+```bash
+bd config list
+```
+
+Expected: prefix key/value exists and matches repository slug
+(for example `my-project`).
+
 Then install/update hooks:
 
 ```bash
@@ -99,6 +116,9 @@ git commit -m "chore(setup): record beads bootstrap artifacts (bd-setup)"
 
 ## Session Start
 
+Mandatory for every new session after Beads is initialized (`bd info --json` succeeds): run
+`.github/prompts/start-work-session.prompt.md` before implementation.
+
 ```bash
 git pull --rebase
 bd backup fetch-git
@@ -117,8 +137,11 @@ Why realign `beads-backup`:
 
 - Claim before coding: `bd update <id> --claim --json`
 - Publish claim for teammates: `bd backup export-git`
+- If no actionable bead exists, create one with `--description`, publish it, then claim it.
 - Use `--description` with `bd create`
 - Never use `bd edit` in automated workflows
+- Add short implementation plan note before coding: `bd note <id> "Implementation plan: ..."`
+- Commit trailers must use exact bead id, for example `(my-project-1234)`
 
 ## Session End
 
@@ -133,3 +156,11 @@ If export fails non-fast-forward:
 git branch -f beads-backup origin/beads-backup
 bd backup export-git
 ```
+
+## References
+
+- https://gastownhall.github.io/beads/
+- https://gastownhall.github.io/beads/cli-reference
+- https://gastownhall.github.io/beads/reference/configuration
+- https://gastownhall.github.io/beads/reference/git-integration
+- https://gastownhall.github.io/beads/reference/faq

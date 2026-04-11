@@ -25,6 +25,7 @@ Use this agent for fresh clone onboarding and setup recovery.
 - Ensure venv, dependencies, Beads, hooks, and quality gates are operational.
 - Ensure Beads team sync is configured for local Dolt + Git backup flow.
 - Never rely on `dolt pull`/`dolt push` or Dolt remotes for team sync.
+- Never rely on `bd import`/`bd export` for team sync (migration/snapshot only).
 - Ensure both `bd` and `dolt` are available and user PATH is configured.
 - Ensure managed hooks preserve both guard checks and Beads hook execution.
 - After PATH changes, remind user to restart VS Code and terminals.

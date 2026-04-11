@@ -80,8 +80,67 @@ to those folders (Windows assets are zip files).
   - Use agent `.github/agents/development-environment-bootstrap.agent.md`
   - Or run prompt `.github/prompts/initialize-development-environment.prompt.md`
 
+## IDE Integration Readiness (Optional)
+
+Use when user asks for editor/agent integration rather than base CLI setup.
+
+CLI-native integrations (preferred when shell access exists):
+
+```bash
+bd setup claude --check
+bd setup cursor --check
+bd setup aider --check
+```
+
+GitHub Copilot MCP setup (optional, VS Code):
+
+1. Install MCP server:
+
+```bash
+uv tool install beads-mcp
+pip install beads-mcp
+pipx install beads-mcp
+```
+
+2. Add project-level config file `.vscode/mcp.json`:
+
+```json
+{
+  "servers": {
+    "beads": {
+      "command": "beads-mcp"
+    }
+  }
+}
+```
+
+3. Optional: configure user-level VS Code MCP for all projects:
+
+- macOS: `~/Library/Application Support/Code/User/mcp.json`
+- Linux: `~/.config/Code/User/mcp.json`
+- Windows: `%APPDATA%\\Code\\User\\mcp.json`
+
+4. Reload VS Code and verify Beads health:
+
+```bash
+bd version
+bd doctor
+bd hooks status
+```
+
+Notes:
+
+- CLI + hooks usually has lower token overhead than MCP.
+- MCP is useful when direct shell workflow is unavailable.
+
 ## Guardrails
 
 - Do not run full initialization by default on every task.
 - Keep setup actions conditional and evidence-based.
 - Keep all setup automation Python-first and cross-platform.
+
+## References
+
+- https://gastownhall.github.io/beads/getting-started/ide-setup
+- https://gastownhall.github.io/beads/cli-reference
+- https://gastownhall.github.io/beads/reference/troubleshooting

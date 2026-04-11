@@ -25,6 +25,7 @@ Goals:
 7. Install managed git hooks (guard + Beads chaining)
 8. Run quality verification
 9. Commit setup-generated tracked files when present (`.gitignore`, `.beads/hooks/*`)
+10. Require session kickoff prompt before any implementation work
 
 Preflight requirement:
 
@@ -68,6 +69,8 @@ Execution order:
    - lint/static analysis
    - setup artifact commit status
 7. If Windows PATH entries were added during setup, remind user to restart VS Code and open a new terminal.
+8. Before any implementation, run `.github/prompts/start-work-session.prompt.md`.
+   - If no actionable bead exists, create one with `--description`, claim it, publish it, and produce a short implementation plan.
 
 Rules:
 
@@ -78,3 +81,4 @@ Rules:
 - Avoid prompting for user confirmations; prefer deterministic, non-interactive commands.
 - Do not edit always-on policy files (`.github/copilot-instructions.md`, `agents.md`) during bootstrap.
 - Never use `dolt pull` or `dolt push` in this repository; use `bd backup fetch-git` and `bd backup export-git`.
+- Treat bootstrap as setup only: do not start implementation until session kickoff flow is complete.

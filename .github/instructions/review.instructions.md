@@ -21,7 +21,7 @@ Use this checklist when reviewing changes.
 - No secrets/customer data in code, docs, or logs.
 - Setup automation remains Python-first and Node tooling requirements remain intact.
 - Beads lifecycle steps are respected when bead ids are involved.
-- Beads sync guidance uses `bd backup fetch-git` / `bd backup export-git` and does not rely on `dolt pull` / `dolt push`.
+- Beads sync guidance uses `bd backup fetch-git` / `bd backup export-git` and does not rely on `dolt pull` / `dolt push` or `bd import` / `bd export`.
 - Tests or validation gates were run, or skip reason is explicit.
 
 ## Review Output Format
