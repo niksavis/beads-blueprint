@@ -19,7 +19,7 @@ Use this checklist when reviewing changes.
 - `get_errors` is clean for changed files.
 - Python code has clear types and error handling.
 - No secrets/customer data in code, docs, or logs.
-- Setup and automation remain Python-only.
+- Setup automation remains Python-first and Node tooling requirements remain intact.
 - Beads lifecycle steps are respected when bead ids are involved.
 - Beads sync guidance uses `bd backup fetch-git` / `bd backup export-git` and does not rely on `dolt pull` / `dolt push`.
 - Tests or validation gates were run, or skip reason is explicit.

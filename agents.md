@@ -25,6 +25,7 @@ Preflight checks:
 
 ```bash
 python --version
+npm --version
 bd --version
 dolt version
 python install_hooks.py --check

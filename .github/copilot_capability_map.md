@@ -12,6 +12,9 @@
   - Agent: .github/agents/development-environment-bootstrap.agent.md
   - Prompt: .github/prompts/initialize-development-environment.prompt.md
 
+- Greenfield project kickoff and scaffolding:
+  - Prompt: .github/prompts/greenfield-project-kickoff.prompt.md
+
 - Beads issue lifecycle and team sync:
   - Skill: .github/skills/beads-workflow/SKILL.md
   - Instruction: .github/instructions/beads-onboarding.instructions.md

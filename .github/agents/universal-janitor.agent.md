@@ -1,7 +1,6 @@
 ---
 name: "Universal Janitor"
 description: "Use when asked to clean up code, remove dead code/dependencies, simplify implementations, and reduce technical debt in any repository."
-model: GPT-5.3-Codex
 tools:
   [
     "vscode/extensions",

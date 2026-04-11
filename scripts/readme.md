@@ -1,13 +1,15 @@
 # Scripts
 
-This folder contains Python-only automation scripts for the template.
+This folder contains Python-first automation scripts for the template.
+Repository tooling also requires Node.js for markdown quality checks.
 
 ## Environment and Setup
 
 - `initialize_environment.py`
   - End-to-end environment bootstrap:
     - create/update `.venv`
-    - install dependencies and tooling
+    - install Python dependencies and tooling
+    - install Node tooling (`npm ci`) used by markdown quality checks
     - bootstrap Beads
     - install hooks
     - run fast validation
@@ -36,6 +38,15 @@ This folder contains Python-only automation scripts for the template.
 python scripts/initialize_environment.py --yes-to-all
 ```
 
+### Setup without Node tooling (temporary)
+
+```bash
+python scripts/initialize_environment.py --yes-to-all --skip-node-tools
+```
+
+Use this only when Node.js is unavailable. Install Node.js 20+, run `npm ci`,
+then rerun `python validate.py --fast`.
+
 ### Beads bootstrap only
 
 ```bash
@@ -50,6 +61,7 @@ python scripts/bootstrap_beads.py --update-tools
 
 ## Design Rules
 
-- Scripts in this template are Python-only for cross-platform consistency.
+- Setup automation scripts in this template are Python-first for cross-platform consistency.
+- Node tooling is required for markdown quality checks.
 - No PowerShell or bash setup scripts are used.
 - Plan conversion is intentionally not scripted in this template.

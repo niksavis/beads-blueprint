@@ -1,7 +1,6 @@
 ---
 name: "Docs Retrieval Expert"
 description: "Use when code depends on external APIs or latest docs: retrieve current, version-aware guidance from Context7 and Microsoft Learn MCP before implementation."
-model: GPT-5.3-Codex
 tools:
   [
     "search/codebase",

@@ -98,8 +98,9 @@ def run_markdownlint(files: list[str] | None = None) -> int:
     try:
         cli = node_bin_path("markdownlint-cli2")
     except FileNotFoundError as e:
-        print(f"\n[validate] markdownlint: SKIP ({e})")
-        return 0
+        print(f"\n[validate] markdownlint: FAIL ({e})")
+        print("[validate] Install Node dependencies with: npm ci")
+        return 1
     if files is not None:
         if not files:
             print("\n[validate] markdownlint: SKIP (no staged Markdown files)")

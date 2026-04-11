@@ -1,6 +1,6 @@
 ---
 name: environment-readiness
-description: "Use when development environment status is unknown, onboarding a fresh clone, or missing-tool errors suggest Python, bd, dolt, hooks, or venv are not ready; run preflight checks and bootstrap only when checks fail."
+description: "Use when development environment status is unknown, onboarding a fresh clone, or missing-tool errors suggest Python, npm, bd, dolt, hooks, or venv are not ready; run preflight checks and bootstrap only when checks fail."
 ---
 
 # Skill: Environment Readiness
@@ -11,7 +11,7 @@ Use this skill to avoid unnecessary setup context and setup commands during norm
 
 - User asks for first-time setup, onboarding, fresh clone, or new machine bootstrap.
 - Commands fail with tool-not-found or environment-not-ready signals.
-- You are unsure whether Python, bd, dolt, hooks, or venv are configured.
+- You are unsure whether Python, npm, bd, dolt, hooks, or venv are configured.
 
 ## Preflight Checks
 
@@ -19,6 +19,7 @@ Run these checks in order:
 
 ```bash
 python --version
+npm --version
 bd --version
 dolt version
 python install_hooks.py --check
@@ -53,6 +54,9 @@ to those folders (Windows assets are zip files).
 - `python --version` fails:
   - Instruct install of full 64-bit CPython from python.org.
   - On Windows, require `Add python.exe to PATH`.
+  - Restart VS Code and open a new terminal, then rerun preflight.
+- `npm --version` fails:
+  - Instruct install of Node.js 20+.
   - Restart VS Code and open a new terminal, then rerun preflight.
 - `bd` or `dolt` checks fail, or hooks fail:
   - Use agent `.github/agents/development-environment-bootstrap.agent.md`

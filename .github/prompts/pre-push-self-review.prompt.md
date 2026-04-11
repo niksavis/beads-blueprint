@@ -9,7 +9,7 @@ for the current working tree before pushing.
 Checklist:
 
 - Zero diagnostics in changed files (`get_errors`).
-- Python-only automation policy remains intact.
+- Python-first automation policy remains intact and Node tooling requirements are satisfied.
 - No emoji in code/logging/comments.
 - No secrets or customer data introduced.
 - Validation ran for changed behavior (`python validate.py --fast` minimum).

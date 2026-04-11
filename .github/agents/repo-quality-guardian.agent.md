@@ -1,7 +1,6 @@
 ---
 name: "Repo Quality Guardian"
 description: "Use for pre-push or pre-completion self-review: enforce quality gates, diagnostics, security checks, and regression-risk validation."
-model: GPT-5.3-Codex
 tools:
   [
     "search/codebase",
@@ -22,7 +21,7 @@ Use this agent to enforce correctness and safety before finishing a task.
 ## Responsibilities
 
 - Ensure changed files are free of diagnostics.
-- Enforce Python-only automation policy.
+- Enforce Python-first automation policy and required Node tooling for markdown quality checks.
 - Confirm no secrets/customer data were introduced.
 - Verify quality gates and tests for changed behavior.
 - Verify Beads guidance uses local Dolt + Git backup sync (not Dolt remotes).

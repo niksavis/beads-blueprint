@@ -6,7 +6,7 @@ Python-first template repository for teams using Beads as the issue tracker.
 
 ## What This Template Provides
 
-- Python-only setup and automation scripts (no PowerShell or bash setup scripts)
+- Python-first setup automation scripts plus Node-based markdown tooling (no PowerShell or bash setup scripts)
 - Stack-agnostic application development; Python is reserved for repository automation
 - Beads + Dolt bootstrap with user-level installation and PATH checks
 - Bash-first terminal defaults in VS Code:
@@ -26,6 +26,7 @@ Python-first template repository for teams using Beads as the issue tracker.
 ## Prerequisites
 
 - Python 3.13 or newer must be installed before running setup commands.
+- Node.js 20 or newer must be installed to provision repository markdown lint tooling.
 - If `python` is not available on Windows, install the full CPython installer from `python.org` (avoid Store-only installs for team consistency).
 - During Windows Python install, enable `Add python.exe to PATH`.
 - After installing Python, restart VS Code and open a new terminal session so PATH updates are applied.
@@ -60,6 +61,9 @@ Use any of these entry points; they route to the same setup workflow:
 
 - Agent: `.github/agents/development-environment-bootstrap.agent.md`
 - Prompt: `.github/prompts/initialize-development-environment.prompt.md`
+- Prompt: `.github/prompts/start-work-session.prompt.md`
+- Prompt: `.github/prompts/greenfield-project-kickoff.prompt.md`
+- Prompt: `.github/prompts/pre-push-self-review.prompt.md`
 - Always-on policy: `.github/copilot-instructions.md` and `agents.md`
 - Capability index: `.github/copilot_capability_map.md`
 
@@ -70,6 +74,8 @@ descriptions for stronger auto-discovery:
 
 - "initialize this repo from scratch on a new machine"
 - "bootstrap development environment and verify hooks"
+- "start this work session and claim next bead"
+- "kick off a greenfield project scaffold in this template"
 - "set up Beads and team sync using backup fetch/export"
 - "add dependency, regenerate lockfiles, and install from requirements txt"
 - "run pre-push quality review and validation gates"
@@ -88,11 +94,12 @@ This command will:
 
 1. Create or refresh `.venv`
 2. Install runtime and dev dependencies
-3. Install or verify Beads and Dolt
-4. Configure VS Code terminal/task settings
-5. Optionally run `bd init`
-6. Install managed git hooks
-7. Run `python validate.py --fast`
+3. Install Node tooling (`npm ci`) for markdown quality checks
+4. Install or verify Beads and Dolt
+5. Configure VS Code terminal/task settings
+6. Optionally run `bd init`
+7. Install managed git hooks
+8. Run `python validate.py --fast`
 
 ### 2. Verify Setup
 
@@ -110,6 +117,14 @@ python scripts/bootstrap_beads.py --update-tools
 
 If Beads or Dolt were installed for the first time and `bd`/`dolt` are still not found, restart VS Code and open a new terminal to reload PATH.
 
+If Node tooling setup is temporarily not possible, you can continue bootstrap with:
+
+```bash
+python scripts/initialize_environment.py --yes-to-all --skip-node-tools
+```
+
+Then install Node.js 20+, run `npm ci`, and rerun `python validate.py --fast`.
+
 ### 3. Team Sync (Shared Repository)
 
 ```bash
@@ -118,6 +133,15 @@ bd backup fetch-git
 git branch -f beads-backup origin/beads-backup || true
 bd ready --json
 ```
+
+### 4. Start and Continue Development (AI-Guided)
+
+- New session kickoff:
+  - `.github/prompts/start-work-session.prompt.md`
+- Greenfield project kickoff and scaffolding:
+  - `.github/prompts/greenfield-project-kickoff.prompt.md`
+- Pre-push quality review:
+  - `.github/prompts/pre-push-self-review.prompt.md`
 
 ## Beads Workflow
 
@@ -205,7 +229,7 @@ Configured in `.vscode/settings.json`:
 
 ## Repository Layout
 
-- `scripts/` - Python-only automation scripts
+- `scripts/` - Python-first automation scripts
 - `.github/instructions/` - conditional coding and workflow instructions
 - `.github/skills/` - reusable workflows
 - `.github/agents/` - specialized subagents
@@ -219,7 +243,7 @@ Configured in `.vscode/settings.json`:
   - Add dev-only packages to `requirements-dev.in`.
   - Regenerate pinned lock files (`requirements.txt`, `requirements-dev.txt`) with `pip-compile`.
   - Install only from lock files (`requirements.txt`, `requirements-dev.txt`), never from `.in` files.
-- Node/JavaScript dependencies (if a Node workspace is added later):
+- Node/JavaScript dependencies (required for repository markdown tooling):
   - Add packages to `package.json` with fixed versions when possible.
   - Commit the corresponding lock file (`package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock`).
 - Avoid ad-hoc dependency installs that are not reflected in package/lock files.

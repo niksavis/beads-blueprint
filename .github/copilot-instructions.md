@@ -23,14 +23,20 @@ This is the canonical always-on policy for this template repository.
 - Run readiness checks only when setup status is unknown, user asks onboarding, or tool checks fail.
 - Preflight checks:
   1. `python --version`
-  2. `bd --version`
-  3. `dolt version`
-  4. `python install_hooks.py --check` (if Python is available)
+  2. `npm --version`
+  3. `bd --version`
+  4. `dolt version`
+  5. `python install_hooks.py --check` (if Python is available)
 - If checks pass, continue with requested task and skip setup flow.
 - If checks fail, route to dedicated onboarding assets:
   - Skill: `.github/skills/environment-readiness/SKILL.md`
   - Agent: `.github/agents/development-environment-bootstrap.agent.md`
   - Prompt: `.github/prompts/initialize-development-environment.prompt.md`
+
+For day-to-day development after setup:
+
+- Session kickoff prompt: `.github/prompts/start-work-session.prompt.md`
+- Greenfield kickoff prompt: `.github/prompts/greenfield-project-kickoff.prompt.md`
 
 ## Terminal Policy
 
@@ -64,6 +70,7 @@ Never require shell-specific setup scripts in this template.
 - Fast local gate: `python validate.py --fast`
 - Commit gate: `python validate.py --commit`
 - Full gate: `python validate.py --full`
+- Markdown quality checks require Node tooling from `npm ci`.
 - Hooks must be managed with:
   - `python install_hooks.py --force`
   - `python install_hooks.py --check`
@@ -77,7 +84,7 @@ Never require shell-specific setup scripts in this template.
   2. Refresh corresponding pinned lock files (`requirements.txt`, `requirements-dev.txt`)
   3. Use pip-tools to compile lockfiles from `.in` inputs
   4. Install dependencies from lockfiles, not from `.in` files
-- Node/JavaScript workflow (if introduced in this repo):
+- Node/JavaScript workflow (required for repository markdown tooling):
   - Update `package.json` with fixed versions when practical.
   - Commit lockfiles (`package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock`).
 - Prefer fixed versions for reproducibility; if a range is required, document why.

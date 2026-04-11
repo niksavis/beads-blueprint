@@ -39,7 +39,7 @@ Released: 2026-04-01
 
 ### v1.0.0 Features
 
-- Migrated repository automation to Python-only scripts
+- Migrated repository setup automation to Python-first scripts
 - Added one-command development environment initialization
 - Added VS Code bash-first terminal defaults across platforms
 - Added reusable Copilot instructions, skills, agents, prompts, and hook templates

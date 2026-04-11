@@ -1,7 +1,6 @@
 ---
 name: "Critical Thinking"
 description: "Use when design decisions are unclear: challenge assumptions, probe trade-offs, and improve reasoning quality before implementation."
-model: GPT-5.3-Codex
 disable-model-invocation: true
 tools:
   [

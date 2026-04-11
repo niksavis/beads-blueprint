@@ -1,7 +1,6 @@
 ---
 name: "Development Environment Bootstrap"
 description: "Use for fresh clone onboarding on a new machine, first-time setup, or repairing broken Python/Beads/hooks environments in this template."
-model: GPT-5.3-Codex
 tools:
   [
     "search/codebase",
@@ -20,7 +19,7 @@ Use this agent for fresh clone onboarding and setup recovery.
 
 ## Responsibilities
 
-- Run setup in strict sequence using Python-only scripts.
+- Run setup in strict sequence using Python-first automation scripts.
 - Avoid overlapping setup commands.
 - If `python` is unavailable, stop and provide install guidance before setup.
 - Ensure venv, dependencies, Beads, hooks, and quality gates are operational.
@@ -35,6 +34,8 @@ Use this agent for fresh clone onboarding and setup recovery.
 0. Preflight Python availability:
    - Verify `python --version` succeeds.
    - If missing on Windows, instruct install of full 64-bit CPython from `python.org` with `Add python.exe to PATH`, then restart VS Code/new terminal.
+   - Verify `npm --version` succeeds.
+   - If missing, instruct install of Node.js 20+ and rerun setup.
 1. Discover current state:
    - `.venv` presence
    - Beads availability (`bd --version`)

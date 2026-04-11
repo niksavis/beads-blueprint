@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Initialize local development environment for this template.
 
-This script is intentionally Python-only so the same command works on
-Windows, macOS, and Linux.
+This script is intentionally Python-first so the same command works on
+Windows, macOS, and Linux. Repository markdown quality tooling relies
+on Node via npm.
 """
 
 from __future__ import annotations
@@ -60,6 +61,24 @@ def install_requirements(repo_root: Path, interpreter: Path) -> None:
             run([str(interpreter), "-m", "pip", "install", "-r", filename], cwd=repo_root)
 
 
+def install_node_dependencies(repo_root: Path, skip_node_tools: bool) -> None:
+    package_json = repo_root / "package.json"
+    if skip_node_tools or not package_json.exists():
+        return
+
+    npm_bin = shutil.which("npm")
+    if not npm_bin:
+        raise RuntimeError(
+            "npm is required for repository markdown lint tooling. "
+            "Install Node.js 20+ and rerun, or pass --skip-node-tools."
+        )
+
+    package_lock = repo_root / "package-lock.json"
+    npm_command = [npm_bin, "ci"] if package_lock.exists() else [npm_bin, "install"]
+    print("Installing Node tooling...")
+    run(npm_command, cwd=repo_root)
+
+
 def locate_bd(repo_root: Path) -> str | None:
     in_path = shutil.which("bd")
     return in_path
@@ -111,6 +130,11 @@ def parse_args() -> argparse.Namespace:
         help="Skip running validate.py --fast",
     )
     parser.add_argument(
+        "--skip-node-tools",
+        action="store_true",
+        help="Skip installing Node-based tooling (markdown quality checks)",
+    )
+    parser.add_argument(
         "--yes-to-all",
         action="store_true",
         help="Auto-confirm interactive prompts",
@@ -130,6 +154,7 @@ def main() -> int:
     )
 
     install_requirements(repo_root, interpreter)
+    install_node_dependencies(repo_root, skip_node_tools=args.skip_node_tools)
 
     if not args.skip_beads:
         bootstrap_cmd = [str(interpreter), "scripts/bootstrap_beads.py"]
@@ -143,8 +168,10 @@ def main() -> int:
     if not args.skip_hooks and (repo_root / "install_hooks.py").exists():
         run([str(interpreter), "install_hooks.py", "--force"], cwd=repo_root)
 
-    if not args.skip_validate and (repo_root / "validate.py").exists():
-        run([str(interpreter), "validate.py", "--fast"], cwd=repo_root, check=False)
+    if args.skip_node_tools and not args.skip_validate:
+        print("Skipping fast validation because --skip-node-tools was set.")
+    elif not args.skip_validate and (repo_root / "validate.py").exists():
+        run([str(interpreter), "validate.py", "--fast"], cwd=repo_root)
 
     print("Environment initialization complete.")
     return 0

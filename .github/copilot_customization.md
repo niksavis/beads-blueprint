@@ -47,6 +47,7 @@ This file lists the reusable Copilot artifacts included by this template.
 - .github/prompts/release-notes-draft.prompt.md
 - .github/prompts/pre-push-self-review.prompt.md
 - .github/prompts/start-work-session.prompt.md
+- .github/prompts/greenfield-project-kickoff.prompt.md
 
 ## Hooks
 

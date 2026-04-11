@@ -29,7 +29,8 @@ Apply these rules for Python changes.
 
 ## Repository Constraints
 
-- Setup/automation scripts must remain Python-only.
+- Setup automation scripts must remain Python-first.
+- Node tooling may be required for repository quality checks.
 - Avoid shell-specific assumptions in script logic.
 - Keep scripts cross-platform (Windows, Linux, macOS).
 
