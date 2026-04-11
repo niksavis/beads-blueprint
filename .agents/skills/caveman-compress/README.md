@@ -79,7 +79,7 @@ If you need local files, the compress skill lives at:
 caveman-compress/
 ```
 
-**Requires:** Python 3.14+
+**Requires:** Python 3.10+
 
 ## Usage
 
