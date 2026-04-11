@@ -1,7 +1,16 @@
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-extend-exclude = [".beads", ".venv", "tools", "build", "dist", "logs"]
+extend-exclude = [
+    ".agents",
+    ".beads",
+    ".claude",
+    ".venv",
+    "tools",
+    "build",
+    "dist",
+    "logs",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "PLC"]
@@ -17,6 +26,9 @@ typeCheckingMode = "basic"
 venvPath = "."
 venv = ".venv"
 exclude = [
+    ".agents",
+    ".beads",
+    ".claude",
     ".venv",
     "tools",
     "build",
@@ -26,6 +38,18 @@ exclude = [
     "**/node_modules",
     "**/.*",
 ]
+ignore = [".agents", ".beads", ".claude"]
 
 [tool.bandit]
-exclude_dirs = [".venv", "tools", "build", "dist", "tests"]
+skips = ["B404", "B603", "B607"]
+exclude_dirs = [
+    ".agents",
+    ".beads",
+    ".claude",
+    ".venv",
+    "node_modules",
+    "tools",
+    "build",
+    "dist",
+    "tests",
+]

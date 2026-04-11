@@ -1,0 +1,7 @@
+# markdownlint ignore
+
+.agents/**
+.beads/**
+
+**/.agents/**
+**/.beads/**

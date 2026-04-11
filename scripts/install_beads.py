@@ -22,6 +22,7 @@ import sys
 import tarfile
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -30,6 +31,31 @@ BEADS_GITHUB_API = "https://api.github.com/repos/gastownhall/beads/releases"
 DOLT_GITHUB_API = "https://api.github.com/repos/dolthub/dolt/releases"
 USER_AGENT = "beads-blueprint-bootstrap"
 DEFAULT_BEADS_VERSION = "0.63.3"
+ALLOWED_DOWNLOAD_HOSTS = {
+    "api.github.com",
+    "github.com",
+    "objects.githubusercontent.com",
+    "release-assets.githubusercontent.com",
+}
+
+
+def _validate_remote_url(url: str) -> None:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https":
+        raise RuntimeError(f"Only HTTPS URLs are allowed, got: {url}")
+    hostname = (parsed.hostname or "").lower()
+    if not hostname:
+        raise RuntimeError(f"URL is missing hostname: {url}")
+    if hostname in ALLOWED_DOWNLOAD_HOSTS:
+        return
+    if hostname.endswith(".githubusercontent.com"):
+        return
+    raise RuntimeError(f"Refusing untrusted download host: {hostname}")
+
+
+def _open_https_request(req: urllib.request.Request, timeout: int):
+    opener = urllib.request.build_opener(urllib.request.HTTPSHandler())
+    return opener.open(req, timeout=timeout)
 
 
 def detect_platform() -> str:
@@ -57,6 +83,7 @@ def detect_architecture() -> str:
 
 
 def request_json(url: str) -> dict:
+    _validate_remote_url(url)
     req = urllib.request.Request(
         url,
         headers={
@@ -64,7 +91,7 @@ def request_json(url: str) -> dict:
             "User-Agent": USER_AGENT,
         },
     )
-    with urllib.request.urlopen(req, timeout=60) as response:
+    with _open_https_request(req, timeout=60) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
@@ -159,12 +186,54 @@ def find_dolt_asset(release: dict, platform_name: str, arch_name: str) -> tuple[
 
 
 def download_to_temp(url: str, suffix: str) -> Path:
+    _validate_remote_url(url)
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
         tmp_path = Path(tmp_file.name)
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=120) as response:
+    with _open_https_request(req, timeout=120) as response:
         tmp_path.write_bytes(response.read())
     return tmp_path
+
+
+def _safe_archive_member_path(base_dir: Path, member_name: str) -> Path:
+    destination = (base_dir / member_name).resolve()
+    base_resolved = base_dir.resolve()
+    try:
+        destination.relative_to(base_resolved)
+    except ValueError as exc:
+        raise RuntimeError(f"Archive member escapes extraction root: {member_name}") from exc
+    return destination
+
+
+def _extract_zip_safe(archive_path: Path, destination_root: Path) -> None:
+    with zipfile.ZipFile(archive_path) as zf:
+        for member in zf.infolist():
+            destination = _safe_archive_member_path(destination_root, member.filename)
+            if member.is_dir():
+                destination.mkdir(parents=True, exist_ok=True)
+                continue
+            if stat.S_ISLNK(member.external_attr >> 16):
+                raise RuntimeError(f"Refusing symlink entry in zip archive: {member.filename}")
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with zf.open(member, "r") as source, destination.open("wb") as target:
+                shutil.copyfileobj(source, target)
+
+
+def _extract_tar_safe(archive_path: Path, destination_root: Path) -> None:
+    with tarfile.open(archive_path) as tf:
+        for member in tf.getmembers():
+            destination = _safe_archive_member_path(destination_root, member.name)
+            if member.isdir():
+                destination.mkdir(parents=True, exist_ok=True)
+                continue
+            if member.issym() or member.islnk() or member.isdev():
+                raise RuntimeError(f"Refusing unsafe tar entry type: {member.name}")
+            source = tf.extractfile(member)
+            if source is None:
+                continue
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with source, destination.open("wb") as target:
+                shutil.copyfileobj(source, target)
 
 
 def _extract_single_binary(
@@ -174,35 +243,36 @@ def _extract_single_binary(
     is_windows: bool,
 ) -> Path:
     temp_extract_dir = Path(tempfile.mkdtemp(prefix="beads-blueprint-extract-"))
-
-    if archive_path.name.endswith(".zip"):
-        with zipfile.ZipFile(archive_path) as zf:
-            zf.extractall(temp_extract_dir)
-    else:
-        with tarfile.open(archive_path) as tf:
-            tf.extractall(temp_extract_dir)
-
-    candidates = list(temp_extract_dir.rglob(executable_name))
-    if not candidates:
-        raise RuntimeError(f"Could not find {executable_name} in downloaded archive")
-
-    destination_dir.mkdir(parents=True, exist_ok=True)
-    destination = destination_dir / executable_name
-    shutil.copy2(candidates[0], destination)
-
-    for item in destination_dir.iterdir():
-        if item == destination:
-            continue
-        if item.is_dir():
-            shutil.rmtree(item)
+    try:
+        if archive_path.name.endswith(".zip"):
+            _extract_zip_safe(archive_path, temp_extract_dir)
         else:
-            item.unlink()
+            _extract_tar_safe(archive_path, temp_extract_dir)
 
-    if not is_windows:
-        destination.chmod(destination.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        candidates = list(temp_extract_dir.rglob(executable_name))
+        if not candidates:
+            raise RuntimeError(f"Could not find {executable_name} in downloaded archive")
 
-    shutil.rmtree(temp_extract_dir, ignore_errors=True)
-    return destination
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        destination = destination_dir / executable_name
+        shutil.copy2(candidates[0], destination)
+
+        for item in destination_dir.iterdir():
+            if item == destination:
+                continue
+            if item.is_dir():
+                shutil.rmtree(item)
+            else:
+                item.unlink()
+
+        if not is_windows:
+            destination.chmod(
+                destination.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            )
+
+        return destination
+    finally:
+        shutil.rmtree(temp_extract_dir, ignore_errors=True)
 
 
 def _normalize_win_path(value: str) -> str:

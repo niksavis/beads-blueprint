@@ -1,0 +1,12 @@
+// markdownlint-cli2 configuration
+// Used by both the CLI (validate.py) and the vscode-markdownlint extension.
+// Rule config lives in .markdownlint.json or per-directory overrides.
+{
+  "ignores": [
+    ".agents/**",
+    ".beads/**",
+    ".claude/**",
+    "node_modules/**",
+    ".venv/**"
+  ]
+}

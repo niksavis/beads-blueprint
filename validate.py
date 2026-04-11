@@ -39,7 +39,7 @@ def tool_path(name: str) -> str:
     return resolved
 
 
-def staged_python_files() -> list[str]:
+def staged_files(ext: str) -> list[str]:
     result = subprocess.run(
         ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
         cwd=ROOT,
@@ -48,7 +48,26 @@ def staged_python_files() -> list[str]:
     )
     if result.returncode != 0:
         return []
-    return [line for line in result.stdout.splitlines() if line.endswith(".py")]
+    return [line for line in result.stdout.splitlines() if line.endswith(ext)]
+
+
+def staged_python_files() -> list[str]:
+    return staged_files(".py")
+
+
+def staged_markdown_files() -> list[str]:
+    return staged_files(".md")
+
+
+def node_bin_path(name: str) -> str:
+    ext = ".cmd" if platform.system() == "Windows" else ""
+    candidate = ROOT / "node_modules" / ".bin" / f"{name}{ext}"
+    if candidate.exists():
+        return str(candidate)
+    resolved = shutil.which(name)
+    if not resolved:
+        raise FileNotFoundError(f"Node tool not found: {name}. Run: npm install")
+    return resolved
 
 
 def run_ruff(files: list[str] | None = None) -> int:
@@ -72,7 +91,21 @@ def run_bandit() -> int:
 
 
 def run_pip_audit() -> int:
-    return run_check("pip-audit", [tool_path("pip-audit"), "-r", "requirements.txt", "--no-deps"])
+    return run_check("pip-audit", [tool_path("pip-audit"), "-r", "requirements.txt"])
+
+
+def run_markdownlint(files: list[str] | None = None) -> int:
+    try:
+        cli = node_bin_path("markdownlint-cli2")
+    except FileNotFoundError as e:
+        print(f"\n[validate] markdownlint: SKIP ({e})")
+        return 0
+    if files is not None:
+        if not files:
+            print("\n[validate] markdownlint: SKIP (no staged Markdown files)")
+            return 0
+        return run_check("markdownlint", [cli] + files)
+    return run_check("markdownlint", [cli, "**/*.md"])
 
 
 def run_pytest() -> int:
@@ -102,20 +135,26 @@ def main() -> int:
     failures: list[str] = []
 
     if args.commit:
-        staged = staged_python_files()
-        if not staged:
-            print("[validate] No staged Python files.")
+        staged_py = staged_python_files()
+        staged_md = staged_markdown_files()
+        if not staged_py and not staged_md:
+            print("[validate] No staged Python or Markdown files.")
             return 0
-        checks = [
-            ("ruff", run_ruff(staged)),
-            ("ruff-format", run_ruff_format(staged)),
-            ("pyright", run_pyright(staged)),
-        ]
+        checks = []
+        if staged_py:
+            checks += [
+                ("ruff", run_ruff(staged_py)),
+                ("ruff-format", run_ruff_format(staged_py)),
+                ("pyright", run_pyright(staged_py)),
+            ]
+        if staged_md:
+            checks += [("markdownlint", run_markdownlint(staged_md))]
     elif args.full:
         checks = [
             ("ruff", run_ruff()),
             ("ruff-format", run_ruff_format()),
             ("pyright", run_pyright()),
+            ("markdownlint", run_markdownlint()),
             ("bandit", run_bandit()),
             ("pip-audit", run_pip_audit()),
             ("pytest", run_pytest()),
@@ -125,6 +164,7 @@ def main() -> int:
             ("ruff", run_ruff()),
             ("ruff-format", run_ruff_format()),
             ("pyright", run_pyright()),
+            ("markdownlint", run_markdownlint()),
         ]
     else:
         checks = [("pytest", run_pytest())]

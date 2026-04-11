@@ -1,5 +1,7 @@
 {
   "python.terminal.activateEnvironment": false,
+  "editor.formatOnSave": false,
+  "prettier.requireConfig": true,
   "terminal.integrated.defaultProfile.windows": "Git Bash (.venv)",
   "terminal.integrated.defaultProfile.linux": "bash",
   "terminal.integrated.defaultProfile.osx": "bash",
@@ -20,6 +22,33 @@
     "PowerShell": {
       "source": "PowerShell"
     }
+  },
+  "ruff.exclude": [".agents", ".beads", ".claude"],
+  "markdownlint.configFile": ".markdownlint.json",
+  "markdownlint.ignore": [
+    ".markdownlintignore",
+    "**/.markdownlintignore",
+    ".agents/**",
+    ".beads/**",
+    ".claude/**",
+    "**/.agents/**",
+    "**/.beads/**",
+    "**/.claude/**"
+  ],
+  "files.exclude": {
+    ".agents": false,
+    ".beads": false
+  },
+  "files.associations": {
+    "*.markdownlint-cli2.jsonc": "jsonc"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": false
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": false
   },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
