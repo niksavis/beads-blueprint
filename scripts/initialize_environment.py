@@ -21,6 +21,7 @@ MIN_NODE_VERSION = (20, 0, 0)
 PINNED_REQUIREMENT_PATTERN = re.compile(
     r"^[A-Za-z0-9_.-]+(?:\[[A-Za-z0-9_,.-]+\])?==[^\s]+(?:\s*;.+)?$"
 )
+ISSUE_PREFIX_SANITIZE_PATTERN = re.compile(r"[^a-z0-9._-]+")
 
 
 def run(command: list[str], cwd: Path, check: bool = True) -> int:
@@ -593,6 +594,52 @@ def maybe_init_beads(repo_root: Path) -> None:
     _run_bd_init_with_fallback(commands, repo_root)
 
 
+def derive_issue_prefix(repo_root: Path) -> str:
+    raw_name = repo_root.name.strip().lower()
+    if not raw_name:
+        return "project"
+
+    normalized = ISSUE_PREFIX_SANITIZE_PATTERN.sub("-", raw_name)
+    normalized = normalized.strip("._-")
+    if not normalized:
+        return "project"
+
+    return normalized
+
+
+def ensure_repo_issue_prefix(repo_root: Path) -> None:
+    bd_bin = locate_bd(repo_root)
+    if not bd_bin:
+        print("Skipping issue prefix configuration: bd is not available yet.")
+        return
+
+    desired_prefix = derive_issue_prefix(repo_root)
+    print(f"Setting Beads issue prefix to repository name: {desired_prefix}")
+
+    configured_keys: list[str] = []
+    for key in ("issue_prefix", "issue-prefix", "id.prefix"):
+        result = subprocess.run(
+            [bd_bin, "config", "set", key, desired_prefix],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if result.returncode == 0:
+            configured_keys.append(key)
+
+    if configured_keys:
+        configured_keys_text = ", ".join(configured_keys)
+        print(f"Configured Beads issue prefix: {desired_prefix} ({configured_keys_text})")
+        return
+
+    raise RuntimeError(
+        "Failed to set Beads issue prefix. Run: bd config set issue_prefix <repo-name>"
+    )
+
+
 def _is_git_repository(repo_root: Path) -> bool:
     result = subprocess.run(
         ["git", "rev-parse", "--is-inside-work-tree"],
@@ -736,6 +783,7 @@ def main() -> int:
             bootstrap_cmd.append("--update-tools")
         run(bootstrap_cmd, cwd=repo_root)
         maybe_init_beads(repo_root)
+        ensure_repo_issue_prefix(repo_root)
 
     if not args.skip_hooks and (repo_root / "install_hooks.py").exists():
         run([str(interpreter), "install_hooks.py", "--force"], cwd=repo_root)

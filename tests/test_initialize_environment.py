@@ -259,3 +259,122 @@ def test_is_beads_initialized_returns_false_on_failure(
     monkeypatch.setattr(module.subprocess, "run", fake_run)
 
     assert module._is_beads_initialized(Path(".")) is False
+
+
+def test_derive_issue_prefix_normalizes_repo_name() -> None:
+    module = _load_initialize_environment_module()
+
+    assert module.derive_issue_prefix(Path("My Project")) == "my-project"
+    assert module.derive_issue_prefix(Path("___")) == "project"
+
+
+def test_ensure_repo_issue_prefix_sets_missing_prefix(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_initialize_environment_module()
+
+    calls: list[list[str]] = []
+    monkeypatch.setattr(module, "locate_bd", lambda _repo_root: "bd")
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        encoding: str,
+        errors: str,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, encoding, errors, check
+        calls.append(command)
+        if command in (
+            ["bd", "config", "set", "issue_prefix", "my-project"],
+            ["bd", "config", "set", "issue-prefix", "my-project"],
+            ["bd", "config", "set", "id.prefix", "my-project"],
+        ):
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.ensure_repo_issue_prefix(Path("/tmp/my-project"))
+
+    assert calls == [
+        ["bd", "config", "set", "issue_prefix", "my-project"],
+        ["bd", "config", "set", "issue-prefix", "my-project"],
+        ["bd", "config", "set", "id.prefix", "my-project"],
+    ]
+    output = capsys.readouterr().out
+    assert "Configured Beads issue prefix: my-project" in output
+
+
+def test_ensure_repo_issue_prefix_succeeds_when_any_key_is_supported(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_initialize_environment_module()
+
+    monkeypatch.setattr(module, "locate_bd", lambda _repo_root: "bd")
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        encoding: str,
+        errors: str,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, encoding, errors, check
+        if command == ["bd", "config", "set", "issue_prefix", "my-project"]:
+            return SimpleNamespace(returncode=1, stdout="", stderr="unknown key")
+        if command == ["bd", "config", "set", "issue-prefix", "my-project"]:
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        if command == ["bd", "config", "set", "id.prefix", "my-project"]:
+            return SimpleNamespace(returncode=1, stdout="", stderr="unknown key")
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.ensure_repo_issue_prefix(Path("/tmp/my-project"))
+
+    output = capsys.readouterr().out
+    assert "Configured Beads issue prefix: my-project" in output
+
+
+def test_ensure_repo_issue_prefix_raises_when_no_key_is_supported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_initialize_environment_module()
+
+    monkeypatch.setattr(module, "locate_bd", lambda _repo_root: "bd")
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        encoding: str,
+        errors: str,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, encoding, errors, check
+        if command in (
+            ["bd", "config", "set", "issue_prefix", "my-project"],
+            ["bd", "config", "set", "issue-prefix", "my-project"],
+            ["bd", "config", "set", "id.prefix", "my-project"],
+        ):
+            return SimpleNamespace(returncode=1, stdout="", stderr="unknown key")
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    with pytest.raises(RuntimeError, match="Failed to set Beads issue prefix"):
+        module.ensure_repo_issue_prefix(Path("/tmp/my-project"))

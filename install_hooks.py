@@ -240,6 +240,14 @@ resolve_issue_prefix() {
         return 0
     fi
 
+    prefix=$(bd config get --json issue-prefix 2>/dev/null \
+        | sed -nE 's/.*"value"[[:space:]]*:[[:space:]]*"([^"]+)".*/\\1/p' \
+        | head -n1)
+    if [ -n "$prefix" ]; then
+        printf '%s\n' "$prefix"
+        return 0
+    fi
+
     prefix=$(bd config get --json id.prefix 2>/dev/null \
         | sed -nE 's/.*"value"[[:space:]]*:[[:space:]]*"([^"]+)".*/\\1/p' \
         | head -n1)
@@ -250,6 +258,14 @@ resolve_issue_prefix() {
 
     prefix=$(bd config list 2>/dev/null \
         | sed -nE 's/^[[:space:]]*issue_prefix[[:space:]]*=[[:space:]]*//p' \
+        | head -n1)
+    if [ -n "$prefix" ]; then
+        printf '%s\n' "$prefix"
+        return 0
+    fi
+
+    prefix=$(bd config list 2>/dev/null \
+        | sed -nE 's/^[[:space:]]*issue-prefix[[:space:]]*=[[:space:]]*//p' \
         | head -n1)
     if [ -n "$prefix" ]; then
         printf '%s\n' "$prefix"

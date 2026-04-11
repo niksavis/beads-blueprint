@@ -55,6 +55,7 @@ def test_commit_msg_hook_template_uses_native_bd_initialization_check() -> None:
     assert "bd info --json" in module.COMMIT_MSG
     assert "resolve_issue_prefix()" in module.COMMIT_MSG
     assert "bd config get --json issue_prefix" in module.COMMIT_MSG
+    assert "bd config get --json issue-prefix" in module.COMMIT_MSG
     assert "ISSUE_PREFIX=$(resolve_issue_prefix || true)" in module.COMMIT_MSG
     assert 'bd show "$TRAILER" --json' in module.COMMIT_MSG
 
@@ -92,7 +93,7 @@ case "$cmd" in
 
                 key="${1:-}"
                 case "$key" in
-                    issue_prefix|id.prefix)
+                    issue_prefix|issue-prefix|id.prefix)
                         if [ -n "${FAKE_BD_PREFIX:-}" ]; then
                             printf '{"key":"%s","value":"%s"}\n' "$key" "$FAKE_BD_PREFIX"
                             exit 0
