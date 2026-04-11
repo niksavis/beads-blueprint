@@ -22,14 +22,21 @@ def _load_install_hooks_module() -> ModuleType:
 
 def test_pre_commit_delegates_to_beads_hook_file() -> None:
     module = _load_install_hooks_module()
-    assert 'run_beads_hook_file pre-commit "$@"' in module.PRE_COMMIT
+    assert 'run_beads_core_hook pre-commit "$@"' in module.PRE_COMMIT
+    assert '"$PYTHON" validate.py --commit' in module.PRE_COMMIT
+    assert "beads_hook_has_validate" not in module.PRE_COMMIT
 
 
-def test_hook_templates_do_not_embed_bd_hooks_run_logic() -> None:
+def test_pre_push_runs_local_validate_and_beads_core_hook() -> None:
+    module = _load_install_hooks_module()
+    assert 'run_beads_core_hook pre-push "$@"' in module.PRE_PUSH
+    assert '"$PYTHON" validate.py' in module.PRE_PUSH
+    assert "beads_hook_has_validate" not in module.PRE_PUSH
+
+
+def test_file_delegated_templates_do_not_embed_bd_hooks_run_logic() -> None:
     module = _load_install_hooks_module()
     templates = (
-        module.PRE_COMMIT,
-        module.PRE_PUSH,
         module.COMMIT_MSG,
         module.POST_MERGE,
         module.POST_REWRITE,
