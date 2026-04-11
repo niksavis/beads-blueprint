@@ -25,7 +25,7 @@ Python-first template repository for teams using Beads as the issue tracker.
 
 ## Prerequisites
 
-- Python 3.13 or newer must be installed before running setup commands.
+- Python 3.14 or newer must be installed before running setup commands.
 - Node.js 20 or newer must be installed to provision repository markdown lint tooling.
 - If `python` is not available on Windows, install the full CPython installer from `python.org` (avoid Store-only installs for team consistency).
 - During Windows Python install, enable `Add python.exe to PATH`.

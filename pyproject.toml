@@ -1,6 +1,6 @@
 [tool.ruff]
 line-length = 100
-target-version = "py313"
+target-version = "py314"
 extend-exclude = [
     ".agents",
     ".beads",
@@ -21,7 +21,7 @@ indent-style = "space"
 line-ending = "lf"
 
 [tool.pyright]
-pythonVersion = "3.13"
+pythonVersion = "3.14"
 typeCheckingMode = "basic"
 venvPath = "."
 venv = ".venv"

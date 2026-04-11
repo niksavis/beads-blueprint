@@ -60,7 +60,7 @@ def get_beads_issue_title(issue_id: str) -> str | None:
             issue = json.loads(line)
             if issue.get("id") == issue_id:
                 return issue.get("title", "")
-    except (json.JSONDecodeError, KeyError):
+    except json.JSONDecodeError, KeyError:
         pass
     return None
 
