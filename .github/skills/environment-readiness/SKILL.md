@@ -19,10 +19,12 @@ Run these checks in order:
 
 ```bash
 python --version
+py -3 --version   # Windows fallback when python alias is missing
 npm --version
 bd --version
 dolt version
 python install_hooks.py --check
+py -3 install_hooks.py --check   # Windows fallback when python alias is missing
 ```
 
 Optional quick quality probe after preflight:
@@ -67,7 +69,7 @@ to those folders (Windows assets are zip files).
 - All checks pass:
   - Skip bootstrap steps.
   - Continue directly with the requested coding task.
-- `python --version` fails:
+- `python --version` fails and `py -3 --version` also fails:
   - Instruct install of full 64-bit CPython from python.org.
   - On Windows, require `Add python.exe to PATH`.
   - Restart VS Code and open a new terminal, then rerun preflight.

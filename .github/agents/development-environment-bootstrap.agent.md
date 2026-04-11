@@ -34,6 +34,7 @@ Use this agent for fresh clone onboarding and setup recovery.
 
 0. Run initialization first:
    - `python scripts/initialize_environment.py`
+   - If `python` is unavailable on Windows but `py` exists, use `py -3 scripts/initialize_environment.py`.
    - The script must non-interactively resolve a Python 3.14+ interpreter, create `.venv`, and install/upgrade Node.js toolchain when possible.
    - If automatic install is unavailable or fails, stop and report the exact blocking requirement.
 1. Discover current state:

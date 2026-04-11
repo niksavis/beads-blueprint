@@ -22,11 +22,11 @@ This is the canonical always-on policy for this template repository.
 - Do not run full environment initialization by default.
 - Run readiness checks only when setup status is unknown, user asks onboarding, or tool checks fail.
 - Preflight checks:
-  1. `python --version`
+  1. `python --version` (Windows fallback: `py -3 --version`)
   2. `npm --version`
   3. `bd --version`
   4. `dolt version`
-  5. `python install_hooks.py --check` (if Python is available)
+  5. `python install_hooks.py --check` (Windows fallback: `py -3 install_hooks.py --check`)
 - If checks pass, continue with requested task and skip setup flow.
 - If checks fail, route to dedicated onboarding assets:
   - Skill: `.github/skills/environment-readiness/SKILL.md`

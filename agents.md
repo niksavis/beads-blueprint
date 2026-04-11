@@ -25,10 +25,12 @@ Preflight checks:
 
 ```bash
 python --version
+py -3 --version   # Windows fallback when python alias is missing
 npm --version
 bd --version
 dolt version
 python install_hooks.py --check
+py -3 install_hooks.py --check   # Windows fallback when python alias is missing
 ```
 
 Decision:

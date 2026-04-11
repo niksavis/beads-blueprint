@@ -58,10 +58,22 @@ Repository tooling also requires Node.js for markdown quality checks.
 python scripts/initialize_environment.py
 ```
 
+Windows fallback when `python` command is unavailable but `py` exists:
+
+```bash
+py -3 scripts/initialize_environment.py
+```
+
 ### Setup without Node tooling (temporary)
 
 ```bash
 python scripts/initialize_environment.py --skip-node-tools
+```
+
+Windows fallback when `python` command is unavailable but `py` exists:
+
+```bash
+py -3 scripts/initialize_environment.py --skip-node-tools
 ```
 
 Use this only when Node.js is unavailable. Install Node.js 20+, run `npm ci`,

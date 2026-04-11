@@ -82,6 +82,7 @@ Bootstrap local development environment end-to-end.
 
 Do these steps in order:
 1) Run: python scripts/initialize_environment.py
+  If `python` is unavailable on Windows but `py` exists, run: py -3 scripts/initialize_environment.py
 2) Ensure Python packages came from requirements.txt and requirements-dev.txt lock files.
 3) Verify Node.js 20+ and npm are available.
 4) Verify Beads and Dolt are installed and available in PATH.
@@ -107,7 +108,10 @@ Rules:
 ## Manual Fallback (No AI)
 
 ```bash
-python scripts/initialize_environment.py && node --version && npm --version && bd --version && python validate.py --fast && python install_hooks.py --check
+python scripts/initialize_environment.py || py -3 scripts/initialize_environment.py
+node --version && npm --version && bd --version
+python validate.py --fast || py -3 validate.py --fast
+python install_hooks.py --check || py -3 install_hooks.py --check
 ```
 
 ## Security Note

@@ -36,6 +36,8 @@ Execution order:
 
 1. Run:
    python scripts/initialize_environment.py
+   If `python` is unavailable on Windows but `py` exists, run:
+   py -3 scripts/initialize_environment.py
 2. If Beads was not initialized by script, run:
    bd init --server --skip-agents --non-interactive
    If `--server` is unavailable in your installed `bd` version, run:
@@ -71,6 +73,7 @@ Rules:
 
 - Do not use shell-specific setup scripts.
 - Keep everything cross-platform via Python commands.
+- On Windows, if `python` command is unavailable but `py` exists, use `py -3` for Python script commands.
 - If a step fails, show the command, exit code, and a minimal corrective action.
 - Avoid prompting for user confirmations; prefer deterministic, non-interactive commands.
 - Do not edit always-on policy files (`.github/copilot-instructions.md`, `agents.md`) during bootstrap.
