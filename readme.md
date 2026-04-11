@@ -95,12 +95,15 @@ bd --version
 dolt version
 python validate.py --fast
 python install_hooks.py --check
+bd info --json
+bd config list
 
 Rules:
 - Do not change global git config.
 - If any step fails, fix it and continue.
 - Do not require VS Code UI actions for venv creation.
 - If setup changes `.gitignore` or `.beads/hooks/*` in your real project repo, commit those files in the same setup commit.
+- Optional tightening: verify Beads config contains `issue-prefix`, `issue_prefix`, or `id.prefix`, and the value matches repository folder slug.
 - Do not edit always-on policy files (`.github/copilot-instructions.md`, `agents.md`) during setup.
 - End with exact next command I should run.
 ```
