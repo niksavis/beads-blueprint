@@ -63,6 +63,7 @@ def test_check_mode_passes_for_managed_hooks_path(monkeypatch: pytest.MonkeyPatc
 
 def test_install_refreshes_beads_hooks_before_setting_managed_path(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     module = _load_install_hooks_module()
 
@@ -76,7 +77,7 @@ def test_install_refreshes_beads_hooks_before_setting_managed_path(
         return True
 
     monkeypatch.setattr(module, "_ensure_managed_hooks_path", fake_ensure_managed_hooks_path)
-    monkeypatch.setattr(module, "HOOKS_DIR", Path("/repo/.git/hooks"))
+    monkeypatch.setattr(module, "HOOKS_DIR", tmp_path / ".git" / "hooks")
     monkeypatch.setattr(module, "HOOKS", {})
 
     assert module.install(check_only=False, force=True) == 0
