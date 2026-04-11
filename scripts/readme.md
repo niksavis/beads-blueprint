@@ -73,8 +73,9 @@ then rerun `python validate.py --fast`.
 python scripts/bootstrap_beads.py
 ```
 
-If Beads initialization adds ignore entries (for example Dolt/Beads artifacts) to
-`.gitignore` in a real project repository, commit that `.gitignore` update.
+If setup generates tracked bootstrap artifacts in a real project repository, commit
+them in one setup commit. This includes `.gitignore` updates and `.beads/hooks/*`
+files created or refreshed by `install_hooks.py`.
 
 ### Optional Beads and Dolt upgrade
 

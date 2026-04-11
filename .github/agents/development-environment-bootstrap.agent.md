@@ -26,6 +26,7 @@ Use this agent for fresh clone onboarding and setup recovery.
 - Ensure Beads team sync is configured for local Dolt + Git backup flow.
 - Never rely on `dolt pull`/`dolt push` or Dolt remotes for team sync.
 - Ensure both `bd` and `dolt` are available and user PATH is configured.
+- Ensure managed hooks preserve both guard checks and Beads hook execution.
 - After PATH changes, remind user to restart VS Code and terminals.
 - Report command evidence and PASS/FAIL status.
 
@@ -54,12 +55,22 @@ Use this agent for fresh clone onboarding and setup recovery.
    - `bd init --server --skip-agents --non-interactive`
    - If `--server` is unavailable in your installed `bd` version, use:
      - `bd init --skip-agents --non-interactive`
+6. Reinstall hooks after init to ensure guard+Beads chaining:
+   - `python install_hooks.py --force`
+   - `python install_hooks.py --check`
+7. Check setup-generated tracked files:
+   - `git status --short -- .gitignore .beads/hooks`
+   - If `.gitignore` or `.beads/hooks/*` changed, commit them in one setup commit.
+   - Use a message that satisfies commit-msg guard, e.g.
+     `chore(setup): record beads bootstrap artifacts (bd-setup)`.
+   - If git identity is missing, report exact `git config --local ...` commands.
 
 ## Recovery Rules
 
 - If `.venv` is broken, rerun with `--force-recreate-venv`.
 - If Beads is missing, rerun `python scripts/bootstrap_beads.py`.
 - If hooks are stale, run `python install_hooks.py --force`.
+- If `.beads` was created during setup, always rerun `python install_hooks.py --force`.
 
 ## Stop Condition
 
@@ -71,3 +82,4 @@ Setup is complete only when:
 4. `node --version` and `npm --version` succeed with supported versions.
 5. `python validate.py --fast` succeeds.
 6. `python install_hooks.py --check` reports clean.
+7. Setup-generated tracked files (`.gitignore`, `.beads/hooks/*`) are committed or explicitly reported.

@@ -22,8 +22,9 @@ Goals:
 4. Bootstrap or verify Beads and Dolt with user-level install paths
 5. Configure VS Code bash-first terminals (Git Bash (.venv) on Windows, bash on Linux/macOS)
 6. Initialize Beads if not already initialized
-7. Install managed git hooks
+7. Install managed git hooks (guard + Beads chaining)
 8. Run quality verification
+9. Commit setup-generated tracked files when present (`.gitignore`, `.beads/hooks/*`)
 
 Preflight requirement:
 
@@ -39,15 +40,22 @@ Execution order:
    bd init --server --skip-agents --non-interactive
    If `--server` is unavailable in your installed `bd` version, run:
    bd init --skip-agents --non-interactive
-   If Beads initialization updates `.gitignore` in a real project repository,
-   commit that `.gitignore` change in the same setup commit.
-3. Verify toolchain:
+3. Ensure hooks are current:
+   python install_hooks.py --force
+   python install_hooks.py --check
+4. Verify toolchain:
    node --version
    npm --version
    python validate.py --fast
    python install_hooks.py --check
    dolt version
-4. Report PASS/FAIL for:
+5. Commit setup-generated tracked files if they exist:
+   - Run: `git status --short -- .gitignore .beads/hooks`
+   - If output includes `.gitignore` or `.beads/hooks/*`, commit them in one setup commit.
+   - Use a commit message that passes hook rules, for example:
+     `chore(setup): record beads bootstrap artifacts (bd-setup)`
+   - If git identity is missing, report exact local commands required and stop before commit.
+6. Report PASS/FAIL for:
    - venv
    - dependencies
    - node tooling
@@ -56,7 +64,8 @@ Execution order:
    - VS Code settings
    - git hooks
    - lint/static analysis
-5. If Windows PATH entries were added during setup, remind user to restart VS Code and open a new terminal.
+   - setup artifact commit status
+7. If Windows PATH entries were added during setup, remind user to restart VS Code and open a new terminal.
 
 Rules:
 
@@ -64,3 +73,5 @@ Rules:
 - Keep everything cross-platform via Python commands.
 - If a step fails, show the command, exit code, and a minimal corrective action.
 - Avoid prompting for user confirmations; prefer deterministic, non-interactive commands.
+- Do not edit always-on policy files (`.github/copilot-instructions.md`, `agents.md`) during bootstrap.
+- Never use `dolt pull` or `dolt push` in this repository; use `bd backup fetch-git` and `bd backup export-git`.

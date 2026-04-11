@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -110,3 +110,69 @@ def test_ensure_node_toolchain_fails_when_node_is_too_old(
 
     with pytest.raises(RuntimeError, match="Node.js 20\\+"):
         module.ensure_node_toolchain(Path("."), auto_install_missing=True)
+
+
+def test_report_setup_artifact_changes_prints_commit_hint(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_initialize_environment_module()
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, check
+        if command[:3] == ["git", "rev-parse", "--is-inside-work-tree"]:
+            return SimpleNamespace(returncode=0, stdout="true\n", stderr="")
+        if command[:3] == ["git", "status", "--short"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout=" M .gitignore\n?? .beads/hooks/pre-push\n",
+                stderr="",
+            )
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.report_setup_artifact_changes(Path("."))
+
+    output = capsys.readouterr().out
+    assert "Bootstrap changed tracked setup artifacts:" in output
+    assert "git add .gitignore .beads/hooks" in output
+    assert "chore(setup): record beads bootstrap artifacts (bd-setup)" in output
+
+
+def test_report_setup_artifact_changes_noop_when_clean(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_initialize_environment_module()
+
+    def fake_run(
+        command: list[str],
+        cwd: Path,
+        capture_output: bool,
+        text: bool,
+        check: bool,
+    ) -> SimpleNamespace:
+        del cwd, capture_output, text, check
+        if command[:3] == ["git", "rev-parse", "--is-inside-work-tree"]:
+            return SimpleNamespace(returncode=0, stdout="true\n", stderr="")
+        if command[:3] == ["git", "status", "--short"]:
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        msg = f"Unexpected command: {command}"
+        raise AssertionError(msg)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    module.report_setup_artifact_changes(Path("."))
+
+    output = capsys.readouterr().out
+    assert output == ""

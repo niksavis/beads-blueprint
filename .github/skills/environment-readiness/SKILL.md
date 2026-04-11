@@ -31,6 +31,22 @@ Optional quick quality probe after preflight:
 python validate.py --fast
 ```
 
+After any bootstrap/init run:
+
+```bash
+python install_hooks.py --force
+python install_hooks.py --check
+git status --short -- .gitignore .beads/hooks
+```
+
+If `.gitignore` or `.beads/hooks/*` changed, commit those files in one setup commit.
+Use a commit message with bead-style trailer, for example:
+
+```bash
+git add .gitignore .beads/hooks
+git commit -m "chore(setup): record beads bootstrap artifacts (bd-setup)"
+```
+
 ## Windows Tool Paths (Beads + Dolt)
 
 On Windows, expected install targets are:

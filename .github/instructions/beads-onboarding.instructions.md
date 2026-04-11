@@ -81,6 +81,20 @@ Then install/update hooks:
 
 ```bash
 python install_hooks.py --force
+python install_hooks.py --check
+```
+
+If setup created or modified tracked bootstrap artifacts, commit them in one setup commit:
+
+```bash
+git status --short -- .gitignore .beads/hooks
+```
+
+Commit when changed:
+
+```bash
+git add .gitignore .beads/hooks
+git commit -m "chore(setup): record beads bootstrap artifacts (bd-setup)"
 ```
 
 ## Session Start

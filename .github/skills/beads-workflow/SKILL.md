@@ -36,6 +36,22 @@ bd context
 bd status
 ```
 
+If `.beads/` does not exist yet in a fresh repository, initialize first and refresh hooks:
+
+```bash
+bd init --server --skip-agents --non-interactive || bd init --skip-agents --non-interactive
+python install_hooks.py --force
+python install_hooks.py --check
+```
+
+If setup changed tracked bootstrap artifacts, commit them:
+
+```bash
+git status --short -- .gitignore .beads/hooks
+git add .gitignore .beads/hooks
+git commit -m "chore(setup): record beads bootstrap artifacts (bd-setup)"
+```
+
 ## Step 0: Sync Before Starting Any Work
 
 Always sync before creating or claiming a bead.

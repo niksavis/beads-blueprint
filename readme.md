@@ -99,7 +99,8 @@ Rules:
 - Do not change global git config.
 - If any step fails, fix it and continue.
 - Do not require VS Code UI actions for venv creation.
-- If Beads initialization updates `.gitignore` in your real project repo, commit that change.
+- If setup changes `.gitignore` or `.beads/hooks/*` in your real project repo, commit those files in the same setup commit.
+- Do not edit always-on policy files (`.github/copilot-instructions.md`, `agents.md`) during setup.
 - End with exact next command I should run.
 ```
 

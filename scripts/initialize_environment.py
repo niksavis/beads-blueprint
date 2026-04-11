@@ -578,6 +578,44 @@ def maybe_init_beads(repo_root: Path) -> None:
     _run_bd_init_with_fallback(commands, repo_root)
 
 
+def _is_git_repository(repo_root: Path) -> bool:
+    result = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.returncode == 0 and result.stdout.strip() == "true"
+
+
+def report_setup_artifact_changes(repo_root: Path) -> None:
+    if not _is_git_repository(repo_root):
+        return
+
+    result = subprocess.run(
+        ["git", "status", "--short", "--", ".gitignore", ".beads/hooks"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return
+
+    changes = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    if not changes:
+        return
+
+    print("Bootstrap changed tracked setup artifacts:")
+    for change in changes:
+        print(f"  {change}")
+
+    print("Commit setup artifacts in one commit:")
+    print("  git add .gitignore .beads/hooks")
+    print('  git commit -m "chore(setup): record beads bootstrap artifacts (bd-setup)"')
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Initialize development environment")
     parser.add_argument(
@@ -677,6 +715,8 @@ def main() -> int:
         print("Skipping fast validation because --skip-node-tools was set.")
     elif not args.skip_validate and (repo_root / "validate.py").exists():
         run([str(interpreter), "validate.py", "--fast"], cwd=repo_root)
+
+    report_setup_artifact_changes(repo_root)
 
     print("Environment initialization complete.")
     return 0
