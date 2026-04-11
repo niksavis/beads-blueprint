@@ -5,15 +5,15 @@
       "label": "Beads Fetch Issues",
       "type": "shell",
       "command": "bd backup fetch-git",
-      "isBackground": false,
-      "problemMatcher": []
+      "problemMatcher": [],
+      "isBackground": false
     },
     {
       "label": "Beads Export Issues",
       "type": "shell",
       "command": "bd backup export-git",
-      "isBackground": false,
-      "problemMatcher": []
+      "problemMatcher": [],
+      "isBackground": false
     }
   ]
 }

@@ -27,17 +27,23 @@ Goals:
 
 Preflight requirement:
 
-- If `python` is not available, stop and provide install guidance.
-- On Windows, direct user to full 64-bit CPython installer on `python.org`, ensure `Add python.exe to PATH` is enabled, then restart VS Code/new terminal.
-- If `npm` is not available, instruct install of Node.js 20+ and rerun setup. As a temporary fallback, allow `python scripts/initialize_environment.py --yes-to-all --skip-node-tools`.
+- Run setup as a no-intervention flow.
+- `scripts/initialize_environment.py` must auto-select Python 3.14+, create `.venv`, and auto-install missing Python/Node tooling when platform package managers are available.
+- If automatic install is impossible, stop and report exact blocker with the command/operator action needed.
 
 Execution order:
 
 1. Run:
-   python scripts/initialize_environment.py --yes-to-all
+   python scripts/initialize_environment.py
 2. If Beads was not initialized by script, run:
-   bd init
+   bd init --server --skip-agents --non-interactive
+   If `--server` is unavailable in your installed `bd` version, run:
+   bd init --skip-agents --non-interactive
+   If Beads initialization updates `.gitignore` in a real project repository,
+   commit that `.gitignore` change in the same setup commit.
 3. Verify toolchain:
+   node --version
+   npm --version
    python validate.py --fast
    python install_hooks.py --check
    dolt version
@@ -57,3 +63,4 @@ Rules:
 - Do not use shell-specific setup scripts.
 - Keep everything cross-platform via Python commands.
 - If a step fails, show the command, exit code, and a minimal corrective action.
+- Avoid prompting for user confirmations; prefer deterministic, non-interactive commands.

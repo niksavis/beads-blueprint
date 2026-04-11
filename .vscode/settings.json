@@ -8,7 +8,10 @@
   "terminal.integrated.profiles.windows": {
     "Git Bash (.venv)": {
       "source": "Git Bash",
-      "args": ["--init-file", ".vscode/git-bash-init.sh"],
+      "args": [
+        "--init-file",
+        ".vscode/git-bash-init.sh"
+      ],
       "icon": "terminal-bash"
     },
     "Git Bash": {
@@ -17,13 +20,21 @@
     },
     "PowerShell (.venv)": {
       "source": "PowerShell",
-      "args": ["-NoExit", "-Command", "& '.venv\\Scripts\\Activate.ps1'"]
+      "args": [
+        "-NoExit",
+        "-Command",
+        "& '.venv\\Scripts\\Activate.ps1'"
+      ]
     },
     "PowerShell": {
       "source": "PowerShell"
     }
   },
-  "ruff.exclude": [".agents", ".beads", ".claude"],
+  "ruff.exclude": [
+    ".agents",
+    ".beads",
+    ".claude"
+  ],
   "markdownlint.configFile": ".markdownlint.json",
   "markdownlint.ignore": [
     ".markdownlintignore",

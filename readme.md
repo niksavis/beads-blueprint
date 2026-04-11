@@ -8,9 +8,11 @@ Run command from parent folder where new project folder should be created.
 
 - Required for project creation:
   - Git
-- Required for full environment bootstrap after creation:
-  - Python 3.14+
-  - Node.js 20+
+- Required to start environment bootstrap:
+  - Python available in PATH
+- During bootstrap:
+  - `scripts/initialize_environment.py` auto-selects Python 3.14+ for `.venv`
+  - Node.js 20+ and npm are auto-installed when platform package managers are available
 - Optional for AI-guided setup:
   - VS Code with GitHub Copilot Chat
 
@@ -79,13 +81,15 @@ You are in repository root of a fresh project created from beads-blueprint.
 Bootstrap local development environment end-to-end.
 
 Do these steps in order:
-1) Run: python scripts/initialize_environment.py --yes-to-all
-2) Ensure Python packages come from requirements.txt and requirements-dev.txt lock files.
-3) Run: npm ci
+1) Run: python scripts/initialize_environment.py
+2) Ensure Python packages came from requirements.txt and requirements-dev.txt lock files.
+3) Verify Node.js 20+ and npm are available.
 4) Verify Beads and Dolt are installed and available in PATH.
 5) Run fast validation and hook checks.
 
 Final checks (report pass/fail for each):
+node --version
+npm --version
 bd --version
 dolt version
 python validate.py --fast
@@ -94,13 +98,15 @@ python install_hooks.py --check
 Rules:
 - Do not change global git config.
 - If any step fails, fix it and continue.
+- Do not require VS Code UI actions for venv creation.
+- If Beads initialization updates `.gitignore` in your real project repo, commit that change.
 - End with exact next command I should run.
 ```
 
 ## Manual Fallback (No AI)
 
 ```bash
-python scripts/initialize_environment.py --yes-to-all && bd --version && python validate.py --fast && python install_hooks.py --check
+python scripts/initialize_environment.py && node --version && npm --version && bd --version && python validate.py --fast && python install_hooks.py --check
 ```
 
 ## Security Note

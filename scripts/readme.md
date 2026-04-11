@@ -27,9 +27,9 @@ Repository tooling also requires Node.js for markdown quality checks.
 
 - `initialize_environment.py`
   - End-to-end environment bootstrap:
-    - create/update `.venv`
+    - discover Python 3.14+ and create/update `.venv`
     - install Python dependencies and tooling
-    - install Node tooling (`npm ci`) used by markdown quality checks
+    - ensure Node.js 20+ and install Node tooling (`npm ci`) used by markdown quality checks
     - bootstrap Beads
     - install hooks
     - run fast validation
@@ -55,13 +55,13 @@ Repository tooling also requires Node.js for markdown quality checks.
 ### Full environment setup
 
 ```bash
-python scripts/initialize_environment.py --yes-to-all
+python scripts/initialize_environment.py
 ```
 
 ### Setup without Node tooling (temporary)
 
 ```bash
-python scripts/initialize_environment.py --yes-to-all --skip-node-tools
+python scripts/initialize_environment.py --skip-node-tools
 ```
 
 Use this only when Node.js is unavailable. Install Node.js 20+, run `npm ci`,
@@ -72,6 +72,9 @@ then rerun `python validate.py --fast`.
 ```bash
 python scripts/bootstrap_beads.py
 ```
+
+If Beads initialization adds ignore entries (for example Dolt/Beads artifacts) to
+`.gitignore` in a real project repository, commit that `.gitignore` update.
 
 ### Optional Beads and Dolt upgrade
 
