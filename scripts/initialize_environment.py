@@ -639,9 +639,7 @@ def _run_bd_init_with_fallback(commands: list[list[str]], repo_root: Path) -> No
 
         stdout = _as_text(result.stdout)
         stderr = _as_text(result.stderr)
-        output = "\n".join(
-            part.strip() for part in (stdout, stderr) if part and part.strip()
-        )
+        output = "\n".join(part.strip() for part in (stdout, stderr) if part and part.strip())
         if not output:
             output = "(no output)"
         failures.append(f"$ {' '.join(command)}\n{output}")
