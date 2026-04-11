@@ -20,6 +20,7 @@ This file lists the reusable Copilot artifacts included by this template.
 - .github/instructions/review.instructions.md
 - .github/instructions/agent-skills.instructions.md
 - .github/instructions/authoring.instructions.md
+- .github/instructions/testing.instructions.md
 
 ## Skills
 
@@ -45,6 +46,7 @@ This file lists the reusable Copilot artifacts included by this template.
 - .github/prompts/initialize-development-environment.prompt.md
 - .github/prompts/release-notes-draft.prompt.md
 - .github/prompts/pre-push-self-review.prompt.md
+- .github/prompts/start-work-session.prompt.md
 
 ## Hooks
 

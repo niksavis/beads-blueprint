@@ -15,10 +15,11 @@
 - Beads issue lifecycle and team sync:
   - Skill: .github/skills/beads-workflow/SKILL.md
   - Instruction: .github/instructions/beads-onboarding.instructions.md
+  - Prompt: .github/prompts/start-work-session.prompt.md
 
 - Python quality and review enforcement:
   - Agent: .github/agents/repo-quality-guardian.agent.md
-  - Instructions: python-code-quality, review, security-data-safety
+  - Instructions: python-code-quality, review, security-data-safety, testing
 
 - External documentation grounding and API freshness:
   - Agent: .github/agents/docs-retrieval-expert.agent.md

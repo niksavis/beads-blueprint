@@ -1,6 +1,5 @@
 ---
 agent: 'agent'
-model: GPT-5.3-Codex
 tools: ['search/codebase', 'search', 'search/changes', 'execute/runInTerminal']
 description: 'Draft concise user-focused release notes from repo changes'
 ---

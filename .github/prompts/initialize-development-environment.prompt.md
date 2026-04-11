@@ -1,6 +1,5 @@
 ---
 agent: "Development Environment Bootstrap"
-model: GPT-5.3-Codex
 tools:
   [
     "search/codebase",
