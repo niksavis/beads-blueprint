@@ -13,6 +13,7 @@ on Windows.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -21,6 +22,7 @@ import stat
 import sys
 import tarfile
 import tempfile
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -37,6 +39,44 @@ ALLOWED_DOWNLOAD_HOSTS = {
     "objects.githubusercontent.com",
     "release-assets.githubusercontent.com",
 }
+RETRYABLE_HTTP_STATUS_CODES = {429, 500, 502, 503, 504}
+MAX_DOWNLOAD_ATTEMPTS = 4
+INITIAL_RETRY_DELAY_SECONDS = 1.0
+
+
+def _sleep_before_retry(attempt: int) -> None:
+    delay = INITIAL_RETRY_DELAY_SECONDS * (2 ** (attempt - 1))
+    time.sleep(delay)
+
+
+def _is_retryable_http_error(exc: urllib.error.HTTPError) -> bool:
+    return exc.code in RETRYABLE_HTTP_STATUS_CODES
+
+
+def _asset_metadata(asset: dict) -> tuple[str, str, int | None, str | None]:
+    name = str(asset.get("name", "")).strip()
+    url = str(asset.get("browser_download_url", "")).strip()
+    raw_size = asset.get("size")
+    expected_size = raw_size if isinstance(raw_size, int) and raw_size >= 0 else None
+    raw_digest = asset.get("digest")
+    expected_digest = (
+        raw_digest.strip() if isinstance(raw_digest, str) and raw_digest.strip() else None
+    )
+    return name, url, expected_size, expected_digest
+
+
+def _parse_expected_digest(expected_digest: str) -> tuple[str, str]:
+    algorithm, separator, digest_hex = expected_digest.partition(":")
+    if not separator:
+        raise RuntimeError(f"Unexpected digest format: {expected_digest}")
+
+    normalized_algorithm = algorithm.strip().lower()
+    normalized_digest = digest_hex.strip().lower()
+    if normalized_algorithm not in hashlib.algorithms_available:
+        raise RuntimeError(f"Unsupported digest algorithm: {normalized_algorithm}")
+    if not normalized_digest or any(ch not in "0123456789abcdef" for ch in normalized_digest):
+        raise RuntimeError(f"Invalid digest value: {expected_digest}")
+    return normalized_algorithm, normalized_digest
 
 
 def _validate_remote_url(url: str) -> None:
@@ -91,8 +131,21 @@ def request_json(url: str) -> dict:
             "User-Agent": USER_AGENT,
         },
     )
-    with _open_https_request(req, timeout=60) as response:
-        return json.loads(response.read().decode("utf-8"))
+
+    for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
+        try:
+            with _open_https_request(req, timeout=60) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            if not _is_retryable_http_error(exc) or attempt == MAX_DOWNLOAD_ATTEMPTS:
+                raise RuntimeError(f"Request failed for {url}: {exc}") from exc
+            _sleep_before_retry(attempt)
+        except (urllib.error.URLError, TimeoutError) as exc:
+            if attempt == MAX_DOWNLOAD_ATTEMPTS:
+                raise RuntimeError(f"Request failed for {url}: {exc}") from exc
+            _sleep_before_retry(attempt)
+
+    raise RuntimeError(f"Request failed for {url} after {MAX_DOWNLOAD_ATTEMPTS} attempts")
 
 
 def resolve_release(api_base: str, version: str | None) -> dict:
@@ -132,7 +185,9 @@ def release_version(release: dict) -> str:
     return tag[1:] if tag.startswith("v") else tag
 
 
-def find_beads_asset(release: dict, platform_name: str, arch_name: str) -> tuple[str, str]:
+def find_beads_asset(
+    release: dict, platform_name: str, arch_name: str
+) -> tuple[str, str, int | None, str | None]:
     version = release_version(release)
     extension = "zip" if platform_name == "windows" else "tar.gz"
     arch_tokens = [arch_name]
@@ -144,7 +199,7 @@ def find_beads_asset(release: dict, platform_name: str, arch_name: str) -> tuple
     for asset in assets:
         name = str(asset.get("name", ""))
         if name in expected and asset.get("browser_download_url"):
-            return name, asset["browser_download_url"]
+            return _asset_metadata(asset)
 
     for asset in assets:
         name = str(asset.get("name", ""))
@@ -153,14 +208,16 @@ def find_beads_asset(release: dict, platform_name: str, arch_name: str) -> tuple
             continue
         if low.endswith(extension) and "beads" in low and platform_name in low:
             if any(token in low for token in arch_tokens):
-                return name, asset["browser_download_url"]
+                return _asset_metadata(asset)
 
     raise RuntimeError(
         f"No matching Beads asset for {platform_name}-{arch_name} in release {version}"
     )
 
 
-def find_dolt_asset(release: dict, platform_name: str, arch_name: str) -> tuple[str, str]:
+def find_dolt_asset(
+    release: dict, platform_name: str, arch_name: str
+) -> tuple[str, str, int | None, str | None]:
     extension = "zip" if platform_name == "windows" else "tar.gz"
     arch_tokens = [arch_name]
     if arch_name == "amd64":
@@ -171,7 +228,7 @@ def find_dolt_asset(release: dict, platform_name: str, arch_name: str) -> tuple[
     for asset in assets:
         name = str(asset.get("name", ""))
         if name in expected and asset.get("browser_download_url"):
-            return name, asset["browser_download_url"]
+            return _asset_metadata(asset)
 
     for asset in assets:
         name = str(asset.get("name", ""))
@@ -180,19 +237,68 @@ def find_dolt_asset(release: dict, platform_name: str, arch_name: str) -> tuple[
             continue
         if low.endswith(extension) and low.startswith("dolt-") and platform_name in low:
             if any(token in low for token in arch_tokens):
-                return name, asset["browser_download_url"]
+                return _asset_metadata(asset)
 
     raise RuntimeError(f"No matching Dolt asset for {platform_name}-{arch_name}")
 
 
-def download_to_temp(url: str, suffix: str) -> Path:
+def download_to_temp(
+    url: str,
+    suffix: str,
+    *,
+    expected_size: int | None,
+    expected_digest: str,
+) -> Path:
     _validate_remote_url(url)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
-        tmp_path = Path(tmp_file.name)
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with _open_https_request(req, timeout=120) as response:
-        tmp_path.write_bytes(response.read())
-    return tmp_path
+    algorithm, expected_hex = _parse_expected_digest(expected_digest)
+
+    for attempt in range(1, MAX_DOWNLOAD_ATTEMPTS + 1):
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_file:
+            tmp_path = Path(tmp_file.name)
+
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            hasher = hashlib.new(algorithm)
+            downloaded_size = 0
+
+            with _open_https_request(req, timeout=120) as response, tmp_path.open("wb") as target:
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    target.write(chunk)
+                    hasher.update(chunk)
+                    downloaded_size += len(chunk)
+
+            if expected_size is not None and downloaded_size != expected_size:
+                raise RuntimeError(
+                    "Downloaded size mismatch for "
+                    f"{url}: expected {expected_size}, got {downloaded_size}"
+                )
+
+            actual_hex = hasher.hexdigest().lower()
+            if actual_hex != expected_hex:
+                raise RuntimeError(
+                    f"Digest mismatch for {url}: expected {algorithm}:{expected_hex}, "
+                    f"got {algorithm}:{actual_hex}"
+                )
+
+            return tmp_path
+        except urllib.error.HTTPError as exc:
+            tmp_path.unlink(missing_ok=True)
+            if not _is_retryable_http_error(exc) or attempt == MAX_DOWNLOAD_ATTEMPTS:
+                raise RuntimeError(f"Download failed for {url}: {exc}") from exc
+            _sleep_before_retry(attempt)
+        except (urllib.error.URLError, TimeoutError) as exc:
+            tmp_path.unlink(missing_ok=True)
+            if attempt == MAX_DOWNLOAD_ATTEMPTS:
+                raise RuntimeError(f"Download failed for {url}: {exc}") from exc
+            _sleep_before_retry(attempt)
+        except RuntimeError:
+            tmp_path.unlink(missing_ok=True)
+            raise
+
+    raise RuntimeError(f"Download failed for {url} after {MAX_DOWNLOAD_ATTEMPTS} attempts")
 
 
 def _safe_archive_member_path(base_dir: Path, member_name: str) -> Path:
@@ -339,9 +445,18 @@ def install_beads_binary(
     version: str,
 ) -> Path:
     release = resolve_release(BEADS_GITHUB_API, version)
-    asset_name, asset_url = find_beads_asset(release, platform_name, arch_name)
+    asset_name, asset_url, asset_size, asset_digest = find_beads_asset(
+        release, platform_name, arch_name
+    )
+    if not asset_digest:
+        raise RuntimeError(f"Refusing unverified Beads download for asset: {asset_name}")
     suffix = ".zip" if platform_name == "windows" else ".tar.gz"
-    archive = download_to_temp(asset_url, suffix)
+    archive = download_to_temp(
+        asset_url,
+        suffix,
+        expected_size=asset_size,
+        expected_digest=asset_digest,
+    )
     try:
         executable_name = "bd.exe" if platform_name == "windows" else "bd"
         destination = _extract_single_binary(
@@ -365,9 +480,18 @@ def install_dolt_binary(
     version: str | None,
 ) -> Path:
     release = resolve_release(DOLT_GITHUB_API, version)
-    asset_name, asset_url = find_dolt_asset(release, platform_name, arch_name)
+    asset_name, asset_url, asset_size, asset_digest = find_dolt_asset(
+        release, platform_name, arch_name
+    )
+    if not asset_digest:
+        raise RuntimeError(f"Refusing unverified Dolt download for asset: {asset_name}")
     suffix = ".zip" if platform_name == "windows" else ".tar.gz"
-    archive = download_to_temp(asset_url, suffix)
+    archive = download_to_temp(
+        asset_url,
+        suffix,
+        expected_size=asset_size,
+        expected_digest=asset_digest,
+    )
     try:
         executable_name = "dolt.exe" if platform_name == "windows" else "dolt"
         destination = _extract_single_binary(

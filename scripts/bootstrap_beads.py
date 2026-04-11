@@ -115,18 +115,20 @@ def update_vscode_tasks(repo_root: Path) -> None:
     print(f"Updated VS Code tasks: {tasks_path}")
 
 
-def verify_tool(name: str, version_args: list[str]) -> None:
+def verify_tool(name: str, version_args: list[str]) -> bool:
     binary = shutil.which(name) or ""
     if not binary:
         print(f"Warning: could not locate {name} after bootstrap.")
-        return
+        return False
 
     result = subprocess.run([binary, *version_args], capture_output=True, text=True)
     if result.returncode == 0:
         output = result.stdout.strip() or result.stderr.strip()
         print(output)
+        return True
     else:
         print(f"Warning: {name} version check failed")
+        return False
 
 
 def parse_args() -> argparse.Namespace:
@@ -151,9 +153,10 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     repo_root = Path(__file__).resolve().parents[1]
+    install_result: dict[str, str | bool] | None = None
 
     if not args.skip_install:
-        ensure_beads_and_dolt(
+        install_result = ensure_beads_and_dolt(
             force=args.force,
             beads_version=args.beads_version,
             dolt_version=args.dolt_version,
@@ -164,8 +167,13 @@ def main() -> int:
     update_vscode_settings(repo_root)
     update_vscode_tasks(repo_root)
     configure_merge_driver(repo_root)
-    verify_tool("bd", ["--version"])
-    verify_tool("dolt", ["version"])
+
+    bd_ok = verify_tool("bd", ["--version"])
+    dolt_ok = verify_tool("dolt", ["version"])
+    if install_result is not None and not (bd_ok and dolt_ok):
+        raise RuntimeError(
+            "Tool bootstrap verification failed: expected bd and dolt to be available."
+        )
 
     print("Bootstrap complete.")
     return 0

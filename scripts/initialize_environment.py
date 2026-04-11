@@ -9,10 +9,16 @@ on Node via npm.
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+MIN_PYTHON_VERSION = (3, 14)
+PINNED_REQUIREMENT_PATTERN = re.compile(
+    r"^[A-Za-z0-9_.-]+(?:\[[A-Za-z0-9_,.-]+\])?==[^\s]+(?:\s*;.+)?$"
+)
 
 
 def run(command: list[str], cwd: Path, check: bool = True) -> int:
@@ -35,6 +41,56 @@ def venv_python_path(repo_root: Path) -> Path:
     return repo_root / ".venv" / "bin" / "python"
 
 
+def python_version(python_bin: str | Path, cwd: Path) -> tuple[int, int, int]:
+    code = "import sys; print(f'{sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}')"
+    result = subprocess.run(
+        [str(python_bin), "-c", code],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Unable to determine Python version for interpreter: {python_bin}")
+
+    parts = result.stdout.strip().split(".")
+    if len(parts) != 3:
+        raise RuntimeError(f"Unexpected Python version output from interpreter: {python_bin}")
+    return int(parts[0]), int(parts[1]), int(parts[2])
+
+
+def ensure_min_python_version(python_bin: str | Path, repo_root: Path) -> None:
+    version = python_version(python_bin, repo_root)
+    if version < MIN_PYTHON_VERSION:
+        required = ".".join(str(part) for part in MIN_PYTHON_VERSION)
+        actual = ".".join(str(part) for part in version)
+        raise RuntimeError(f"Python {required}+ is required, but found {actual} at: {python_bin}")
+
+
+def _iter_lock_requirements(file_path: Path) -> list[str]:
+    requirements: list[str] = []
+    for raw_line in file_path.read_text(encoding="utf-8").splitlines():
+        if raw_line.startswith((" ", "\t")):
+            continue
+
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith(("-", "--")):
+            continue
+
+        requirements.append(line)
+    return requirements
+
+
+def ensure_pinned_lockfile(file_path: Path) -> None:
+    for requirement in _iter_lock_requirements(file_path):
+        if not PINNED_REQUIREMENT_PATTERN.match(requirement):
+            raise RuntimeError(
+                f"Unpinned or unsupported requirement in {file_path.name}: {requirement}"
+            )
+
+
 def ensure_venv(repo_root: Path, python_bin: str, recreate: bool) -> Path:
     venv_dir = repo_root / ".venv"
     if recreate and venv_dir.exists():
@@ -51,14 +107,23 @@ def ensure_venv(repo_root: Path, python_bin: str, recreate: bool) -> Path:
     return interpreter
 
 
-def install_requirements(repo_root: Path, interpreter: Path) -> None:
+def install_requirements(repo_root: Path, interpreter: Path, upgrade_pip: bool) -> None:
     print("Installing Python dependencies...")
-    run([str(interpreter), "-m", "pip", "install", "--upgrade", "pip"], cwd=repo_root)
+    lockfiles = ("requirements.txt", "requirements-dev.txt")
+    missing = [name for name in lockfiles if not (repo_root / name).exists()]
+    if missing:
+        joined = ", ".join(missing)
+        raise RuntimeError(f"Missing lockfile(s): {joined}")
 
-    for filename in ("requirements.txt", "requirements-dev.txt"):
-        file_path = repo_root / filename
-        if file_path.exists():
-            run([str(interpreter), "-m", "pip", "install", "-r", filename], cwd=repo_root)
+    if upgrade_pip:
+        run([str(interpreter), "-m", "pip", "install", "--upgrade", "pip"], cwd=repo_root)
+
+    for filename in lockfiles:
+        ensure_pinned_lockfile(repo_root / filename)
+        run(
+            [str(interpreter), "-m", "pip", "install", "--require-virtualenv", "-r", filename],
+            cwd=repo_root,
+        )
 
 
 def install_node_dependencies(repo_root: Path, skip_node_tools: bool) -> None:
@@ -74,7 +139,13 @@ def install_node_dependencies(repo_root: Path, skip_node_tools: bool) -> None:
         )
 
     package_lock = repo_root / "package-lock.json"
-    npm_command = [npm_bin, "ci"] if package_lock.exists() else [npm_bin, "install"]
+    if not package_lock.exists():
+        raise RuntimeError(
+            "package-lock.json is required for reproducible Node installs. "
+            "Generate and commit it, then rerun initialization."
+        )
+
+    npm_command = [npm_bin, "ci"]
     print("Installing Node tooling...")
     run(npm_command, cwd=repo_root)
 
@@ -94,7 +165,7 @@ def maybe_init_beads(repo_root: Path, assume_yes: bool) -> None:
         return
 
     if prompt_yes("Initialize Beads now with 'bd init'?", assume_yes):
-        run([bd_bin, "init"], cwd=repo_root, check=False)
+        run([bd_bin, "init"], cwd=repo_root)
 
 
 def parse_args() -> argparse.Namespace:
@@ -135,6 +206,11 @@ def parse_args() -> argparse.Namespace:
         help="Skip installing Node-based tooling (markdown quality checks)",
     )
     parser.add_argument(
+        "--upgrade-pip",
+        action="store_true",
+        help="Upgrade pip in .venv before installing dependencies",
+    )
+    parser.add_argument(
         "--yes-to-all",
         action="store_true",
         help="Auto-confirm interactive prompts",
@@ -147,13 +223,15 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
 
     print("=== Initialize Development Environment ===")
+    ensure_min_python_version(args.python, repo_root)
     interpreter = ensure_venv(
         repo_root=repo_root,
         python_bin=args.python,
         recreate=args.force_recreate_venv,
     )
 
-    install_requirements(repo_root, interpreter)
+    ensure_min_python_version(interpreter, repo_root)
+    install_requirements(repo_root, interpreter, upgrade_pip=args.upgrade_pip)
     install_node_dependencies(repo_root, skip_node_tools=args.skip_node_tools)
 
     if not args.skip_beads:
