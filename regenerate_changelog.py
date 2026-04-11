@@ -25,9 +25,22 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
 CHANGELOG_FILE = PROJECT_ROOT / "changelog.md"
 VERSION_FILE = PROJECT_ROOT / "version.py"
+DEFAULT_VERSION = "0.1.0"
+
+
+def ensure_version_file() -> None:
+    if VERSION_FILE.exists():
+        return
+
+    VERSION_FILE.write_text(
+        f'"""Project version."""\n\n__version__ = "{DEFAULT_VERSION}"\n',
+        encoding="utf-8",
+    )
+    print(f"Initialized {VERSION_FILE.name} at {DEFAULT_VERSION}")
 
 
 def read_version() -> str:
+    ensure_version_file()
     content = VERSION_FILE.read_text(encoding="utf-8")
     match = re.search(r'__version__\s*=\s*["\'](\d+\.\d+\.\d+)["\']', content)
     if not match:

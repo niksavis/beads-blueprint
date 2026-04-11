@@ -74,6 +74,14 @@ $env:PROJECT_NAME='my-project'; $env:GIT_NAME='John Smith'; $env:GIT_EMAIL='john
 - If commit identity is available (from `GIT_*` values or existing git config), script creates initial commit.
 - If identity is not available, script skips initial commit and prints local-only commands.
 
+## Files Removed In New Projects
+
+This is informational only. The one-line project scripts do this automatically.
+
+- Remove `scripts/new-project.sh` and `scripts/new-project.ps1`.
+- Remove `version.py` and `changelog.md` (`release.py` creates them on first release).
+- In `tests/`, keep only `__init__.py` and `test_smoke.py`.
+
 ## Next Step In Copilot Chat
 
 After project is created and opened in VS Code, paste:

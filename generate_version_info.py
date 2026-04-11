@@ -8,9 +8,13 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent
 VERSION_FILE = PROJECT_ROOT / "version.py"
 OUTPUT_DIR = PROJECT_ROOT / "build"
+DEFAULT_VERSION = "0.1.0"
 
 
 def read_version() -> str:
+    if not VERSION_FILE.exists():
+        return DEFAULT_VERSION
+
     content = VERSION_FILE.read_text(encoding="utf-8")
     match = re.search(r'__version__\s*=\s*["\'](\d+\.\d+\.\d+)["\']', content)
     if not match:

@@ -19,9 +19,27 @@ from regenerate_changelog import ensure_version_section
 PROJECT_ROOT = Path(__file__).parent
 VERSION_FILE = PROJECT_ROOT / "version.py"
 README_FILE = PROJECT_ROOT / "readme.md"
+DEFAULT_VERSION = (0, 1, 0)
+
+
+def _format_version(version: tuple[int, int, int]) -> str:
+    return f"{version[0]}.{version[1]}.{version[2]}"
+
+
+def ensure_version_file() -> None:
+    if VERSION_FILE.exists():
+        return
+
+    version_str = _format_version(DEFAULT_VERSION)
+    VERSION_FILE.write_text(
+        f'"""Project version."""\n\n__version__ = "{version_str}"\n',
+        encoding="utf-8",
+    )
+    print(f"Initialized {VERSION_FILE.name} at {version_str}")
 
 
 def read_version() -> tuple[int, int, int]:
+    ensure_version_file()
     content = VERSION_FILE.read_text(encoding="utf-8")
     match = re.search(r'__version__\s*=\s*["\'](\d+)\.(\d+)\.(\d+)["\']', content)
     if not match:
@@ -41,13 +59,16 @@ def bump_version(current: tuple[int, int, int], bump_type: str) -> tuple[int, in
 
 
 def write_version(version: tuple[int, int, int]) -> str:
-    version_str = f"{version[0]}.{version[1]}.{version[2]}"
+    version_str = _format_version(version)
+    ensure_version_file()
     content = VERSION_FILE.read_text(encoding="utf-8")
     updated = re.sub(
         r'(__version__\s*=\s*["\'])\d+\.\d+\.\d+(["\'])',
         rf"\g<1>{version_str}\g<2>",
         content,
     )
+    if updated == content:
+        raise ValueError("Could not update __version__ in version.py")
     VERSION_FILE.write_text(updated, encoding="utf-8")
     return version_str
 

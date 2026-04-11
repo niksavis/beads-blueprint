@@ -53,6 +53,14 @@ Repository tooling also requires Node.js for markdown quality checks.
 - `configure_beads.py`
   - Configures git merge settings for `.beads/issues.jsonl`
 
+## Files Removed In New Projects
+
+This is informational only. The one-line project scripts do this automatically.
+
+- Remove `scripts/new-project.sh` and `scripts/new-project.ps1`.
+- Remove `version.py` and `changelog.md` (`release.py` creates them on first release).
+- In `tests/`, keep only `__init__.py` and `test_smoke.py`.
+
 ## Usage
 
 ### Full environment setup

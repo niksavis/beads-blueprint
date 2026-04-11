@@ -34,6 +34,17 @@ init_repo_main_branch() {
   git branch -M main
 }
 
+sanitize_template_artifacts() {
+  # Remove template-only wrappers, release artifacts, and infrastructure
+  # tests from generated projects. Users start with a clean baseline.
+  rm -f \
+    "scripts/new-project.sh" \
+    "scripts/new-project.ps1" \
+    "changelog.md" \
+    "version.py"
+  find tests/ -maxdepth 1 -name '*.py' ! -name '__init__.py' ! -name 'test_smoke.py' -delete
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --project-name)
@@ -77,6 +88,7 @@ git clone -- "$TEMPLATE_URL" "$PROJECT_NAME"
 cd "$PROJECT_NAME"
 rm -rf .git
 init_repo_main_branch
+sanitize_template_artifacts
 
 should_commit=false
 [[ -n "$GIT_NAME" ]] && git config --local user.name "$GIT_NAME"

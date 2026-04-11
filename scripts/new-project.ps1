@@ -48,6 +48,23 @@ function Initialize-Repository {
     Invoke-Git -Arguments @("branch", "-M", "main")
 }
 
+function Initialize-TemplateScaffold {
+    # Remove template-only wrappers, release artifacts, and infrastructure
+    # tests from generated projects. Users start with a clean baseline.
+    $toRemove = @(
+        "scripts/new-project.sh",
+        "scripts/new-project.ps1",
+        "changelog.md",
+        "version.py"
+    )
+    foreach ($item in $toRemove) {
+        Remove-Item -Force -ErrorAction SilentlyContinue -LiteralPath $item
+    }
+    Get-ChildItem -Path "tests" -Filter "*.py" -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -notin @("__init__.py", "test_smoke.py") } |
+        Remove-Item -Force
+}
+
 if (-not $ProjectName) {
     $ProjectName = "my-project"
 }
@@ -67,6 +84,7 @@ Invoke-Git -Arguments @("clone", "--", $TemplateUrl, $ProjectName)
 Set-Location -LiteralPath $ProjectName
 Remove-Item -Recurse -Force .git
 Initialize-Repository
+Initialize-TemplateScaffold
 
 $shouldCommit = $false
 if ($GitName) { Invoke-Git -Arguments @("config", "--local", "user.name", $GitName) }

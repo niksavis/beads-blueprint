@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.0.3
+
+Released: 2026-04-11
+
+### Features
+
+- One-line project creation now strips template-only test files and keeps only `tests/__init__.py` and `tests/test_smoke.py` in generated repositories.
+
+### Improvements
+
+- New project scripts now remove template bootstrap wrappers automatically and keep generated repositories cleaner by default.
+- Added first-release bootstrap behavior so `release.py` recreates missing `version.py` and `changelog.md` when needed.
+- Clarified documentation in top-level and scripts READMEs about which files are removed automatically in generated projects.
+
+### Bug Fixes
+
+- Aligned Bash and PowerShell one-line project scripts to apply the same cleanup behavior.
+
 ## Unreleased
 
 ### Notes
