@@ -73,6 +73,40 @@ Manual update workflow (Windows):
 
 If tools are already installed, setup should offer optional updates.
 
+Install the GitHub Copilot MCP server for Beads:
+
+```bash
+uv tool install beads-mcp
+```
+
+Configure VS Code MCP entries:
+
+1. User-level config for all projects:
+
+- Windows: `%APPDATA%\\Code\\User\\mcp.json`
+- macOS: `~/Library/Application Support/Code/User/mcp.json`
+- Linux: `~/.config/Code/User/mcp.json`
+
+With merged Beads server entry:
+
+```json
+{
+  "servers": {
+    "beads": {
+      "command": "beads-mcp"
+    }
+  }
+}
+```
+
+When updating an existing `mcp.json`, merge into the existing JSON object.
+Do not remove or overwrite unrelated MCP servers.
+
+This setup is triggered by development environment initialization:
+
+- `python scripts/initialize_environment.py`
+- which runs `python scripts/bootstrap_beads.py`
+
 ## Fresh Clone Setup
 
 From repository root:

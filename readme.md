@@ -13,6 +13,8 @@ Run command from parent folder where new project folder should be created.
 - During bootstrap:
   - `scripts/initialize_environment.py` auto-selects Python 3.14+ for `.venv`
   - Node.js 20+ and npm are auto-installed when platform package managers are available
+  - Beads bootstrap installs `beads-mcp` with `uv` when available
+  - Beads MCP server is configured in user-level VS Code `mcp.json`
 - Optional for AI-guided setup:
   - VS Code with GitHub Copilot Chat
 

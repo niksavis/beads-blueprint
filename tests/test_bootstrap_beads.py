@@ -75,3 +75,61 @@ def test_vscode_json_files_written_with_lf_line_endings(tmp_path: Path) -> None:
 
     assert isinstance(json.loads(settings_bytes.decode("utf-8")), dict)
     assert isinstance(json.loads(tasks_bytes.decode("utf-8")), dict)
+
+
+def test_ensure_mcp_config_preserves_existing_servers(tmp_path: Path) -> None:
+    module = _load_bootstrap_beads_module()
+    mcp_path = tmp_path / "mcp.json"
+    mcp_path.write_text(
+        json.dumps(
+            {
+                "servers": {
+                    "other": {"command": "other-mcp", "args": ["--flag"]},
+                    "beads": {"args": ["--debug"]},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    module._ensure_mcp_config(mcp_path)
+
+    payload = json.loads(mcp_path.read_text(encoding="utf-8"))
+    assert payload["servers"]["other"] == {"command": "other-mcp", "args": ["--flag"]}
+    assert payload["servers"]["beads"]["command"] == "beads-mcp"
+    assert payload["servers"]["beads"]["args"] == ["--debug"]
+
+
+def test_ensure_mcp_config_fails_on_invalid_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    module = _load_bootstrap_beads_module()
+    mcp_path = tmp_path / "mcp.json"
+    original = "{not-valid-json"
+    mcp_path.write_text(original, encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="invalid JSON"):
+        module._ensure_mcp_config(mcp_path)
+
+    assert mcp_path.read_text(encoding="utf-8") == original
+    output = capsys.readouterr().out
+    assert output == ""
+
+
+def test_update_user_vscode_mcp_config_writes_user_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_bootstrap_beads_module()
+
+    appdata_root = tmp_path / "AppData" / "Roaming"
+    monkeypatch.setenv("APPDATA", str(appdata_root))
+    monkeypatch.setattr(module.platform, "system", lambda: "Windows")
+
+    module.update_user_vscode_mcp_config()
+
+    user_mcp = appdata_root / "Code" / "User" / "mcp.json"
+
+    user_payload = json.loads(user_mcp.read_text(encoding="utf-8"))
+
+    assert user_payload["servers"]["beads"]["command"] == "beads-mcp"

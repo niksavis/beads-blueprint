@@ -36,7 +36,10 @@ Repository tooling also requires Node.js for markdown quality checks.
 
 - `bootstrap_beads.py`
   - Installs or verifies Beads and Dolt
+  - Installs `beads-mcp` via `uv tool install beads-mcp`
   - Configures VS Code settings/tasks
+  - Updates VS Code user-level `mcp.json` for Beads (all projects)
+  - Preserves unrelated existing MCP servers when updating `mcp.json`
   - Configures git merge driver for Beads JSONL merges
 
 - `install_beads.py`
