@@ -1,252 +1,121 @@
 # Beads Blueprint Template
 
-Python-first template repository for teams using Beads as the issue tracker.
+Create new local repo from template with one command.
 
-**Version:** 1.0.2
-
-## What This Template Provides
-
-- Python-first setup automation scripts plus Node-based markdown tooling (no PowerShell or bash setup scripts)
-- Stack-agnostic application development; Python is reserved for repository automation
-- Beads + Dolt bootstrap with user-level installation and PATH checks
-- Bash-first terminal defaults in VS Code:
-  - Windows: `Git Bash (.venv)`
-  - Linux/macOS: `bash`
-- Development environment initialization in one command
-- Lint/static-analysis toolchain and managed git hooks
-- Copilot customization starter pack:
-  - instructions
-  - agents
-  - skills
-  - prompts
-  - hook templates
-- Lightweight release flow with changelog draft and version bumping
-- Minimal GitHub Actions workflows for lint and build checks
+Run command from parent folder where new project folder should be created.
 
 ## Prerequisites
 
-- Python 3.14 or newer must be installed before running setup commands.
-- Node.js 20 or newer must be installed to provision repository markdown lint tooling.
-- If `python` is not available on Windows, install the full CPython installer from `python.org` (avoid Store-only installs for team consistency).
-- During Windows Python install, enable `Add python.exe to PATH`.
-- After installing Python, restart VS Code and open a new terminal session so PATH updates are applied.
+- Required for project creation:
+  - Git
+- Required for full environment bootstrap after creation:
+  - Python 3.14+
+  - Node.js 20+
+- Optional for AI-guided setup:
+  - VS Code with GitHub Copilot Chat
 
-## First-Time Setup (New Developer or AI Agent)
+## One-Line Project Creation
 
-This repository is designed so a brand-new developer or AI agent can bootstrap
-from a fresh clone on a new machine with no prior project knowledge.
+### Linux or Git Bash
 
-### Recommended Bootstrap Path (Human or AI)
-
-Run from repository root:
+Default project name (`my-project`):
 
 ```bash
-python scripts/initialize_environment.py --yes-to-all
+curl -sSL https://raw.githubusercontent.com/niksavis/beads-blueprint/main/scripts/new-project.sh | bash
 ```
 
-Then verify setup:
+Custom project name:
 
 ```bash
+curl -sSL https://raw.githubusercontent.com/niksavis/beads-blueprint/main/scripts/new-project.sh | PROJECT_NAME="my-project" bash
+```
+
+Custom project name + local git identity:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/niksavis/beads-blueprint/main/scripts/new-project.sh | PROJECT_NAME="my-project" GIT_NAME="John Smith" GIT_EMAIL="john.smith@email.com" bash
+```
+
+### Windows PowerShell
+
+Default project name (`my-project`):
+
+```powershell
+irm https://raw.githubusercontent.com/niksavis/beads-blueprint/main/scripts/new-project.ps1 | iex
+```
+
+Custom project name:
+
+```powershell
+$env:PROJECT_NAME='my-project'; irm https://raw.githubusercontent.com/niksavis/beads-blueprint/main/scripts/new-project.ps1 | iex
+```
+
+Custom project name + local git identity:
+
+```powershell
+$env:PROJECT_NAME='my-project'; $env:GIT_NAME='John Smith'; $env:GIT_EMAIL='john.smith@email.com'; irm https://raw.githubusercontent.com/niksavis/beads-blueprint/main/scripts/new-project.ps1 | iex
+```
+
+## Parameters
+
+- `PROJECT_NAME`: local folder/repo name (default: `my-project`)
+- `GIT_NAME`: local git author name for new repo only
+- `GIT_EMAIL`: local git author email for new repo only
+- `TEMPLATE_URL`: override template repo source (default: `https://github.com/niksavis/beads-blueprint.git`)
+
+## Git Identity Policy
+
+- Script never writes global git config.
+- If you pass `GIT_NAME` or `GIT_EMAIL`, script sets them with `git config --local` in new repo only.
+- If commit identity is available (from `GIT_*` values or existing git config), script creates initial commit.
+- If identity is not available, script skips initial commit and prints local-only commands.
+
+## Next Step In Copilot Chat
+
+After project is created and opened in VS Code, paste:
+
+```text
+You are in repository root of a fresh project created from beads-blueprint.
+Bootstrap local development environment end-to-end.
+
+Do these steps in order:
+1) Run: python scripts/initialize_environment.py --yes-to-all
+2) Ensure Python packages come from requirements.txt and requirements-dev.txt lock files.
+3) Run: npm ci
+4) Verify Beads and Dolt are installed and available in PATH.
+5) Run fast validation and hook checks.
+
+Final checks (report pass/fail for each):
 bd --version
+dolt version
 python validate.py --fast
 python install_hooks.py --check
+
+Rules:
+- Do not change global git config.
+- If any step fails, fix it and continue.
+- End with exact next command I should run.
 ```
 
-If `python` is missing on Windows, install full 64-bit CPython from
-`python.org`, enable `Add python.exe to PATH`, restart VS Code, then rerun.
-
-### AI Agent Entry Points
-
-Use any of these entry points; they route to the same setup workflow:
-
-- Agent: `.github/agents/development-environment-bootstrap.agent.md`
-- Prompt: `.github/prompts/initialize-development-environment.prompt.md`
-- Prompt: `.github/prompts/start-work-session.prompt.md`
-- Prompt: `.github/prompts/greenfield-project-kickoff.prompt.md`
-- Prompt: `.github/prompts/pre-push-self-review.prompt.md`
-- Always-on policy: `.github/copilot-instructions.md` and `agents.md`
-- Capability index: `.github/copilot_capability_map.md`
-
-### Discovery-Friendly Task Phrases
-
-These phrases are intentionally aligned with agent/skill/instruction
-descriptions for stronger auto-discovery:
-
-- "initialize this repo from scratch on a new machine"
-- "bootstrap development environment and verify hooks"
-- "start this work session and claim next bead"
-- "kick off a greenfield project scaffold in this template"
-- "set up Beads and team sync using backup fetch/export"
-- "add dependency, regenerate lockfiles, and install from requirements txt"
-- "run pre-push quality review and validation gates"
-
-## Quick Start
-
-### 1. Initialize Everything
-
-Run from repository root:
+## Manual Fallback (No AI)
 
 ```bash
-python scripts/initialize_environment.py --yes-to-all
+python scripts/initialize_environment.py --yes-to-all && bd --version && python validate.py --fast && python install_hooks.py --check
 ```
 
-This command will:
+## Security Note
 
-1. Create or refresh `.venv`
-2. Install runtime and dev dependencies
-3. Install Node tooling (`npm ci`) for markdown quality checks
-4. Install or verify Beads and Dolt
-5. Configure VS Code terminal/task settings
-6. Optionally run `bd init`
-7. Install managed git hooks
-8. Run `python validate.py --fast`
-
-### 2. Verify Setup
+If you do not want to pipe remote scripts directly, download and inspect first:
 
 ```bash
-bd --version
-python validate.py --fast
-python install_hooks.py --check
+curl -sSLo new-project.sh https://raw.githubusercontent.com/niksavis/beads-blueprint/main/scripts/new-project.sh
+bash new-project.sh
 ```
 
-Optional tool upgrade (when `bd` and `dolt` already exist):
-
-```bash
-python scripts/bootstrap_beads.py --update-tools
+```powershell
+iwr https://raw.githubusercontent.com/niksavis/beads-blueprint/main/scripts/new-project.ps1 -OutFile new-project.ps1
+powershell -ExecutionPolicy Bypass -File .\new-project.ps1
 ```
-
-If Beads or Dolt were installed for the first time and `bd`/`dolt` are still not found, restart VS Code and open a new terminal to reload PATH.
-
-If Node tooling setup is temporarily not possible, you can continue bootstrap with:
-
-```bash
-python scripts/initialize_environment.py --yes-to-all --skip-node-tools
-```
-
-Then install Node.js 20+, run `npm ci`, and rerun `python validate.py --fast`.
-
-### 3. Team Sync (Shared Repository)
-
-```bash
-git pull --rebase
-bd backup fetch-git
-git branch -f beads-backup origin/beads-backup || true
-bd ready --json
-```
-
-### 4. Start and Continue Development (AI-Guided)
-
-- New session kickoff:
-  - `.github/prompts/start-work-session.prompt.md`
-- Greenfield project kickoff and scaffolding:
-  - `.github/prompts/greenfield-project-kickoff.prompt.md`
-- Pre-push quality review:
-  - `.github/prompts/pre-push-self-review.prompt.md`
-
-## Beads Workflow
-
-### Core Lifecycle
-
-1. Claim before work:
-
-```bash
-bd update <id> --claim --json
-```
-
-1. Implement and validate changes
-1. Close bead before commit:
-
-```bash
-bd close <id> --reason "Done" --json
-```
-
-1. Commit with bead id in message
-
-## Quality Gates
-
-Quick gate:
-
-```bash
-python validate.py --fast
-```
-
-Commit gate:
-
-```bash
-python validate.py --commit
-```
-
-Full gate:
-
-```bash
-python validate.py --full
-```
-
-Install hooks:
-
-```bash
-python install_hooks.py --force
-```
-
-## Release Workflow
-
-1. Generate changelog draft JSON:
-
-```bash
-python regenerate_changelog.py --preview --json
-```
-
-1. Draft release notes (manually or with prompt):
-
-- `.github/prompts/release-notes-draft.prompt.md`
-
-1. Bump version:
-
-```bash
-python release.py patch
-python release.py minor
-python release.py major
-```
-
-1. Template release flow does not create git tags.
-
-## VS Code Defaults
-
-Configured in `.vscode/settings.json`:
-
-- Windows default terminal: `Git Bash (.venv)`
-- Linux/macOS default terminal: `bash`
-
-## GitHub Actions
-
-- `.github/workflows/lint.yml`:
-  - dependency install
-  - `python validate.py --fast`
-- `.github/workflows/build.yml`:
-  - smoke build checks
-  - changelog draft generation
-  - optional tests if `tests/` exists
-
-## Repository Layout
-
-- `scripts/` - Python-first automation scripts
-- `.github/instructions/` - conditional coding and workflow instructions
-- `.github/skills/` - reusable workflows
-- `.github/agents/` - specialized subagents
-- `.github/prompts/` - reusable prompt templates
-- `.github/hooks/` - hook configuration packs
-
-## Dependency Management Policy
-
-- Python dependencies:
-  - Add runtime packages to `requirements.in`.
-  - Add dev-only packages to `requirements-dev.in`.
-  - Regenerate pinned lock files (`requirements.txt`, `requirements-dev.txt`) with `pip-compile`.
-  - Install only from lock files (`requirements.txt`, `requirements-dev.txt`), never from `.in` files.
-- Node/JavaScript dependencies (required for repository markdown tooling):
-  - Add packages to `package.json` with fixed versions when possible.
-  - Commit the corresponding lock file (`package-lock.json`, `pnpm-lock.yaml`, or `yarn.lock`).
-- Avoid ad-hoc dependency installs that are not reflected in package/lock files.
 
 ## License
 

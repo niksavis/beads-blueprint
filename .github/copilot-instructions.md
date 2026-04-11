@@ -44,7 +44,7 @@ For day-to-day development after setup:
 - Linux/macOS default: `bash`
 - PowerShell may be used as fallback only.
 
-Never require shell-specific setup scripts in this template.
+Core setup remains Python-first. Shell wrapper scripts are allowed for one-line bootstrap UX.
 
 ## Beads Workflow Rules
 

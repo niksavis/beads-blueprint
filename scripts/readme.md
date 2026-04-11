@@ -5,6 +5,26 @@ Repository tooling also requires Node.js for markdown quality checks.
 
 ## Environment and Setup
 
+- `new-project.sh`
+  - One-line bootstrap entry point for Linux/Git Bash (`curl ... | bash`)
+  - Creates local project from template and initializes a fresh git history
+  - Any provided `GIT_NAME`/`GIT_EMAIL` values are applied with `git config --local`
+  - Supports optional parameters via environment variables:
+    - `PROJECT_NAME`
+    - `GIT_NAME`
+    - `GIT_EMAIL`
+    - `TEMPLATE_URL`
+
+- `new-project.ps1`
+  - One-line bootstrap entry point for Windows PowerShell (`irm ... | iex`)
+  - Creates local project from template and initializes a fresh git history
+  - Any provided `GIT_NAME`/`GIT_EMAIL` values are applied with `git config --local`
+  - Supports optional parameters via environment variables:
+    - `PROJECT_NAME`
+    - `GIT_NAME`
+    - `GIT_EMAIL`
+    - `TEMPLATE_URL`
+
 - `initialize_environment.py`
   - End-to-end environment bootstrap:
     - create/update `.venv`
@@ -63,5 +83,5 @@ python scripts/bootstrap_beads.py --update-tools
 
 - Setup automation scripts in this template are Python-first for cross-platform consistency.
 - Node tooling is required for markdown quality checks.
-- No PowerShell or bash setup scripts are used.
+- Shell wrappers are supported for one-line project creation UX.
 - Plan conversion is intentionally not scripted in this template.
