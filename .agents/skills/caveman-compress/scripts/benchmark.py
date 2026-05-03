@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Support both direct execution and module import
 try:
@@ -11,6 +11,7 @@ except ImportError:
 
 try:
     import tiktoken
+
     _enc = tiktoken.get_encoding("o200k_base")
 except ImportError:
     _enc = None
