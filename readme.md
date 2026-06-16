@@ -13,7 +13,7 @@ Run command from parent folder where new project folder should be created.
 - During bootstrap:
   - `scripts/initialize_environment.py` auto-selects Python 3.14+ for `.venv`
   - Node.js 20+ and npm are auto-installed when platform package managers are available
-  - Beads bootstrap installs `beads-mcp` with `uv` when available
+  - Beads bootstrap installs `beads-mcp` using `uv` (required for MCP setup)
   - Beads MCP server is configured in user-level VS Code `mcp.json`
 - Optional for AI-guided setup:
   - VS Code with GitHub Copilot Chat
@@ -99,6 +99,7 @@ Do these steps in order:
 5) Run fast validation and hook checks.
 
 Final checks (report pass/fail for each):
+python --version
 node --version
 npm --version
 bd --version
@@ -107,6 +108,8 @@ python validate.py --fast
 python install_hooks.py --check
 bd info --json
 bd config list
+
+If `python` is unavailable on Windows, run `py -3` equivalents for Python-based checks.
 
 Rules:
 - Do not change global git config.
@@ -133,11 +136,28 @@ Only stop when complete or when a hard blocker exists.
 
 ## Manual Fallback (No AI)
 
+Linux/macOS/Git Bash:
+
 ```bash
-python scripts/initialize_environment.py || py -3 scripts/initialize_environment.py
-node --version && npm --version && bd --version
-python validate.py --fast || py -3 validate.py --fast
-python install_hooks.py --check || py -3 install_hooks.py --check
+if command -v python >/dev/null 2>&1; then python scripts/initialize_environment.py; else py -3 scripts/initialize_environment.py; fi
+if command -v python >/dev/null 2>&1; then python --version; else py -3 --version; fi
+node --version && npm --version && bd --version && dolt version
+if command -v python >/dev/null 2>&1; then python validate.py --fast; else py -3 validate.py --fast; fi
+if command -v python >/dev/null 2>&1; then python install_hooks.py --check; else py -3 install_hooks.py --check; fi
+bd info --json
+bd config list
+```
+
+Windows PowerShell:
+
+```powershell
+if (Get-Command python -ErrorAction SilentlyContinue) { python scripts/initialize_environment.py } else { py -3 scripts/initialize_environment.py }
+if (Get-Command python -ErrorAction SilentlyContinue) { python --version } else { py -3 --version }
+node --version; npm --version; bd --version; dolt version
+if (Get-Command python -ErrorAction SilentlyContinue) { python validate.py --fast } else { py -3 validate.py --fast }
+if (Get-Command python -ErrorAction SilentlyContinue) { python install_hooks.py --check } else { py -3 install_hooks.py --check }
+bd info --json
+bd config list
 ```
 
 ## Security Note
