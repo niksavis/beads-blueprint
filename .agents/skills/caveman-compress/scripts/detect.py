@@ -110,7 +110,15 @@ def detect_file_type(filepath: Path) -> str:
     if ext in COMPRESSIBLE_EXTENSIONS:
         return "natural_language"
     if ext in SKIP_EXTENSIONS:
-        config_extensions = {".json", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".env"}
+        config_extensions = {
+            ".json",
+            ".yaml",
+            ".yml",
+            ".toml",
+            ".ini",
+            ".cfg",
+            ".env",
+        }
         return "config" if ext in config_extensions else "code"
 
     # Extensionless files (like CLAUDE.md, TODO) — check content
