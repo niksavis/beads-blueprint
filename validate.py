@@ -16,6 +16,7 @@ import argparse
 import platform
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -76,6 +77,19 @@ def node_bin_path(name: str) -> str:
     return resolved
 
 
+def python_path() -> str:
+    if PYTHON.exists():
+        return str(PYTHON)
+    if sys.executable:
+        return sys.executable
+    resolved = shutil.which("python3") or shutil.which("python")
+    if not resolved:
+        raise FileNotFoundError(
+            f"Python executable not found. Expected virtual environment interpreter at: {PYTHON}"
+        )
+    return resolved
+
+
 def run_ruff(files: list[str] | None = None) -> int:
     args = [tool_path("ruff"), "check"] + (files if files else ["."])
     return run_check("ruff", args)
@@ -124,7 +138,7 @@ def run_pytest() -> int:
 
 
 def run_agent_harness_verify(*, strict: bool = False) -> int:
-    command = [str(PYTHON), "scripts/verify_agent_harness.py"]
+    command = [python_path(), "scripts/verify_agent_harness.py"]
     if strict:
         command.append("--strict")
     return run_check("agent-harness", command)
