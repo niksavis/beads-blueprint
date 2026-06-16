@@ -3,9 +3,11 @@
 
 Modes:
 - python validate.py             -> tests-focused gate (pre-push default)
-- python validate.py --commit    -> staged python lint + typing
-- python validate.py --fast      -> quick lint + typing
-- python validate.py --full      -> lint + typing + security + dependency audit + tests
+- python validate.py --commit    -> staged python/markdown checks
+                                 + harness checks for customization changes
+- python validate.py --fast      -> quick lint + typing + harness checks
+- python validate.py --full      -> lint + typing + security + dependency audit
+                                 + tests + harness checks
 """
 
 from __future__ import annotations
@@ -39,7 +41,7 @@ def tool_path(name: str) -> str:
     return resolved
 
 
-def staged_files(ext: str) -> list[str]:
+def staged_repo_files() -> list[str]:
     result = subprocess.run(
         ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
         cwd=ROOT,
@@ -48,7 +50,11 @@ def staged_files(ext: str) -> list[str]:
     )
     if result.returncode != 0:
         return []
-    return [line for line in result.stdout.splitlines() if line.endswith(ext)]
+    return [line for line in result.stdout.splitlines() if line]
+
+
+def staged_files(ext: str) -> list[str]:
+    return [line for line in staged_repo_files() if line.endswith(ext)]
 
 
 def staged_python_files() -> list[str]:
@@ -117,6 +123,25 @@ def run_pytest() -> int:
     return run_check("pytest", [tool_path("pytest"), "-q"])
 
 
+def run_agent_harness_verify(*, strict: bool = False) -> int:
+    command = [str(PYTHON), "scripts/verify_agent_harness.py"]
+    if strict:
+        command.append("--strict")
+    return run_check("agent-harness", command)
+
+
+def should_run_harness_check_for_commit() -> bool:
+    relevant_prefixes = (".github/", "agents.md", "scripts/")
+    relevant_suffixes = (".md", ".py", ".json", ".yml", ".yaml")
+    for path in staged_repo_files():
+        normalized = path.replace("\\", "/")
+        if normalized.endswith("scripts/verify_agent_harness.py"):
+            return True
+        if normalized.startswith(relevant_prefixes) and normalized.endswith(relevant_suffixes):
+            return True
+    return False
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Repository quality gate")
     parser.add_argument("--commit", action="store_true", help="Validate staged Python files")
@@ -138,8 +163,9 @@ def main() -> int:
     if args.commit:
         staged_py = staged_python_files()
         staged_md = staged_markdown_files()
-        if not staged_py and not staged_md:
-            print("[validate] No staged Python or Markdown files.")
+        run_harness = should_run_harness_check_for_commit()
+        if not staged_py and not staged_md and not run_harness:
+            print("[validate] No staged Python, Markdown, or harness-related files.")
             return 0
         checks = []
         if staged_py:
@@ -150,8 +176,11 @@ def main() -> int:
             ]
         if staged_md:
             checks += [("markdownlint", run_markdownlint(staged_md))]
+        if run_harness:
+            checks += [("agent-harness", run_agent_harness_verify(strict=True))]
     elif args.full:
         checks = [
+            ("agent-harness", run_agent_harness_verify(strict=True)),
             ("ruff", run_ruff()),
             ("ruff-format", run_ruff_format()),
             ("pyright", run_pyright()),
@@ -162,6 +191,7 @@ def main() -> int:
         ]
     elif args.fast:
         checks = [
+            ("agent-harness", run_agent_harness_verify(strict=True)),
             ("ruff", run_ruff()),
             ("ruff-format", run_ruff_format()),
             ("pyright", run_pyright()),

@@ -120,6 +120,17 @@ Rules:
 - After successful verification, last sentence must be: If VS Code did not reload automatically, restart VS Code now so extensions and tooling load correctly.
 ```
 
+For autonomous multi-phase implementation after setup, you can instead paste:
+
+```text
+Use Work Orchestrator mode for this repository.
+Break down the requested work, delegate to specialist agents, implement changes, and keep iterating until all deterministic gates pass:
+- python scripts/verify_agent_harness.py --strict
+- python validate.py --fast
+- targeted tests for changed behavior
+Only stop when complete or when a hard blocker exists.
+```
+
 ## Manual Fallback (No AI)
 
 ```bash

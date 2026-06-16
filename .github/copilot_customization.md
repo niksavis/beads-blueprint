@@ -21,6 +21,7 @@ This file lists the reusable Copilot artifacts included by this template.
 - .github/instructions/agent-skills.instructions.md
 - .github/instructions/authoring.instructions.md
 - .github/instructions/testing.instructions.md
+- .github/instructions/orchestration.instructions.md
 
 ## Skills
 
@@ -32,6 +33,8 @@ This file lists the reusable Copilot artifacts included by this template.
 - .github/skills/context7-retrieval-patterns/SKILL.md
 - .github/skills/microsoft-docs/SKILL.md
 - .github/skills/microsoft-code-reference/SKILL.md
+- .github/skills/orchestrated-execution/SKILL.md
+- .github/skills/deterministic-quality-gates/SKILL.md
 
 ## Agents
 
@@ -40,6 +43,7 @@ This file lists the reusable Copilot artifacts included by this template.
 - .github/agents/docs-retrieval-expert.agent.md
 - .github/agents/critical-thinking.agent.md
 - .github/agents/universal-janitor.agent.md
+- .github/agents/work-orchestrator.agent.md
 
 ## Prompts
 
@@ -48,6 +52,7 @@ This file lists the reusable Copilot artifacts included by this template.
 - .github/prompts/pre-push-self-review.prompt.md
 - .github/prompts/start-work-session.prompt.md
 - .github/prompts/greenfield-project-kickoff.prompt.md
+- .github/prompts/autonomous-orchestrated-delivery.prompt.md
 
 ## Hooks
 

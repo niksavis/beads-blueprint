@@ -11,6 +11,14 @@ auto-load `.github/copilot-instructions.md`.
 - Conditional policy: `.github/instructions/*.instructions.md`
 - Task workflows: `.github/skills/**/SKILL.md`
 
+## Orchestrator-First Flow
+
+- For complex or multi-phase requests, use `.github/agents/work-orchestrator.agent.md` as the primary coordinator.
+- Use shared orchestration playbook: `.github/skills/orchestrated-execution/SKILL.md`.
+- Use shared deterministic gate playbook: `.github/skills/deterministic-quality-gates/SKILL.md`.
+- Run harness integrity check before completion:
+  - `python scripts/verify_agent_harness.py --strict`
+
 ## Always-On Context Budget
 
 - Keep this shim minimal.

@@ -16,6 +16,11 @@ This is the canonical always-on policy for this template repository.
 - Use Beads as the primary issue tracker.
 - Keep setup and quality gates simple, deterministic, and reproducible.
 - Keep always-on instructions minimal; route heavy workflows to on-demand skills/agents.
+- Prefer orchestrator-first execution for multi-phase work:
+  - Primary coordinator agent: `.github/agents/work-orchestrator.agent.md`
+  - Shared orchestration skill: `.github/skills/orchestrated-execution/SKILL.md`
+  - Shared deterministic gate skill: `.github/skills/deterministic-quality-gates/SKILL.md`
+  - Harness verifier: `python scripts/verify_agent_harness.py --strict`
 
 ## Environment Readiness Gate
 

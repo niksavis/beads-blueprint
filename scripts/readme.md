@@ -53,6 +53,13 @@ Repository tooling also requires Node.js for markdown quality checks.
 - `configure_beads.py`
   - Configures git merge settings for `.beads/issues.jsonl`
 
+- `verify_agent_harness.py`
+  - Deterministically verifies customization harness integrity:
+    - required orchestrator/skill/prompt/instruction artifacts exist
+    - frontmatter contracts are valid across agents/skills/prompts/instructions
+    - inventory docs reference required orchestration artifacts
+  - Used by `python validate.py --fast`, `--commit` (when relevant), and `--full`
+
 ## Files Removed In New Projects
 
 This is informational only. The one-line project scripts do this automatically.
@@ -104,6 +111,12 @@ files created or refreshed by `install_hooks.py`.
 
 ```bash
 python scripts/bootstrap_beads.py --update-tools
+```
+
+### Harness integrity check
+
+```bash
+python scripts/verify_agent_harness.py --strict
 ```
 
 ## Design Rules

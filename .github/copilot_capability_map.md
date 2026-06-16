@@ -7,6 +7,14 @@
 
 ## Core Capability Areas
 
+- Primary orchestration and autonomous delivery:
+  - Agent: .github/agents/work-orchestrator.agent.md
+  - Skill: .github/skills/orchestrated-execution/SKILL.md
+  - Skill: .github/skills/deterministic-quality-gates/SKILL.md
+  - Prompt: .github/prompts/autonomous-orchestrated-delivery.prompt.md
+  - Instruction: .github/instructions/orchestration.instructions.md
+  - Script: scripts/verify_agent_harness.py
+
 - Environment bootstrap and recovery:
   - Skill: .github/skills/environment-readiness/SKILL.md
   - Agent: .github/agents/development-environment-bootstrap.agent.md
