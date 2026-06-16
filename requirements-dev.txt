@@ -23,6 +23,7 @@ charset-normalizer==3.4.6
 click==8.3.1
     # via
     #   djlint
+    #   import-linter
     #   pip-tools
 colorama==0.4.6
     # via
@@ -51,10 +52,14 @@ filelock==3.25.2
     #   cachecontrol
     #   python-discovery
     #   virtualenv
+grimp==3.14
+    # via import-linter
 identify==2.6.18
     # via pre-commit
 idna==3.11
     # via requests
+import-linter==2.11
+    # via -r requirements-dev.in
 iniconfig==2.3.0
     # via pytest
 jsbeautifier==1.15.4
@@ -135,6 +140,7 @@ requests==2.33.1
 rich==14.3.3
     # via
     #   bandit
+    #   import-linter
     #   pip-audit
 ruff==0.15.8
     # via -r requirements-dev.in
@@ -153,11 +159,16 @@ tomli-w==1.2.0
 tqdm==4.67.3
     # via djlint
 typing-extensions==4.15.0
-    # via pyright
+    # via
+    #   grimp
+    #   import-linter
+    #   pyright
 urllib3==2.6.3
     # via requests
 virtualenv==21.2.0
     # via pre-commit
+vulture==2.16
+    # via -r requirements-dev.in
 wheel==0.46.3
     # via pip-tools
 
