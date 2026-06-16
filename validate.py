@@ -2,7 +2,7 @@
 """Repository quality gate.
 
 Modes:
-- python validate.py             -> tests-focused gate (pre-push default)
+- python validate.py             -> deterministic default gate (harness + fast checks + tests)
 - python validate.py --commit    -> staged python/markdown checks
                                  + harness checks for customization changes
 - python validate.py --fast      -> quick lint + typing + harness checks
@@ -198,7 +198,14 @@ def main() -> int:
             ("markdownlint", run_markdownlint()),
         ]
     else:
-        checks = [("pytest", run_pytest())]
+        checks = [
+            ("agent-harness", run_agent_harness_verify(strict=True)),
+            ("ruff", run_ruff()),
+            ("ruff-format", run_ruff_format()),
+            ("pyright", run_pyright()),
+            ("markdownlint", run_markdownlint()),
+            ("pytest", run_pytest()),
+        ]
 
     for name, code in checks:
         if code != 0:
@@ -209,7 +216,7 @@ def main() -> int:
         print(f"[validate] FAILED: {', '.join(failures)}")
         return 1
 
-    mode = "commit" if args.commit else "full" if args.full else "fast" if args.fast else "push"
+    mode = "commit" if args.commit else "full" if args.full else "fast" if args.fast else "default"
     print(f"[validate] ALL CHECKS PASSED (mode: {mode})")
     return 0
 

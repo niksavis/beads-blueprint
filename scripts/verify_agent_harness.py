@@ -40,14 +40,13 @@ class Finding:
 
 def parse_frontmatter(path: Path) -> dict[str, str]:
     content = path.read_text(encoding="utf-8")
-    if not content.startswith("---\n"):
+    match = re.match(r"^---\r?\n(.*?)\r?\n---(?:\r?\n|$)", content, flags=re.DOTALL)
+    if not match:
+        if content.startswith("---"):
+            raise ValueError("unterminated frontmatter")
         raise ValueError("missing frontmatter")
 
-    end = content.find("\n---", 4)
-    if end == -1:
-        raise ValueError("unterminated frontmatter")
-
-    block = content[4:end]
+    block = match.group(1)
     fields: dict[str, str] = {}
     for raw_line in block.splitlines():
         line = raw_line.strip()

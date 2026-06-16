@@ -1,5 +1,5 @@
 ---
-agent: "agent"
+agent: "Work Orchestrator"
 description: "Start a new work session: sync state, review open beads, claim next task, and confirm environment is ready before coding begins"
 ---
 

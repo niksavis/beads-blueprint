@@ -37,3 +37,6 @@ jobs:
 
             - name: Run quick validation
               run: python validate.py --fast
+
+            - name: Run regression tests
+              run: python -m pytest -q
