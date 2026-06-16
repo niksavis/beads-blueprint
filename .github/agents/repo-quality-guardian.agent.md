@@ -3,12 +3,14 @@ name: "Repo Quality Guardian"
 description: "Use for pre-push or pre-completion self-review: enforce quality gates, diagnostics, security checks, and regression-risk validation."
 tools:
   [
-    "search/codebase",
-    "search",
-    "search/changes",
+    "search/fileSearch",
+    "search/textSearch",
+    "read/readFile",
     "read/problems",
     "execute/runInTerminal",
     "execute/getTerminalOutput",
+    "execute/runTests",
+    "execute/testFailure",
     "read/terminalLastCommand",
     "read/terminalSelection",
   ]

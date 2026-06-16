@@ -3,19 +3,16 @@ name: "Docs Retrieval Expert"
 description: "Use when code depends on external APIs or latest docs: retrieve current, version-aware guidance from Context7 and Microsoft Learn MCP before implementation."
 tools:
   [
-    "search/codebase",
-    "search",
+    "search/fileSearch",
+    "search/textSearch",
     "search/usages",
-    "edit/editFiles",
-    "search/changes",
-    "read/problems",
+    "read/readFile",
     "web/fetch",
-    "execute/runInTerminal",
-    "execute/getTerminalOutput",
-    "read/terminalLastCommand",
-    "read/terminalSelection",
-    "io.github.upstash/context7/*",
-    "microsoftdocs/mcp/*",
+    "io.github.upstash/context7/resolve-library-id",
+    "io.github.upstash/context7/get-library-docs",
+    "microsoftdocs/mcp/microsoft_docs_search",
+    "microsoftdocs/mcp/microsoft_docs_fetch",
+    "microsoftdocs/mcp/microsoft_code_sample_search",
   ]
 ---
 

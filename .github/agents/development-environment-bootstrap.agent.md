@@ -3,8 +3,9 @@ name: "Development Environment Bootstrap"
 description: "Use for fresh clone onboarding on a new machine, first-time setup, or repairing broken Python/Beads/hooks environments in this template."
 tools:
   [
-    "search/codebase",
-    "search",
+      "search/fileSearch",
+      "search/textSearch",
+      "read/readFile",
     "read/problems",
     "execute/runInTerminal",
     "execute/getTerminalOutput",

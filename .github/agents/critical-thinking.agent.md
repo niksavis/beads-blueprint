@@ -5,12 +5,10 @@ disable-model-invocation: true
 tools:
   [
     "search/codebase",
-    "vscode/extensions",
-    "web/fetch",
-    "web/githubRepo",
-    "read/problems",
-    "search",
+    "search/fileSearch",
+    "search/textSearch",
     "search/usages",
+    "read/readFile",
   ]
 ---
 
